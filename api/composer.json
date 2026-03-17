@@ -1,0 +1,11 @@
+{
+    "name": "mv-studio/api",
+    "autoload": {
+        "psr-4": {
+            "MvStudio\\Api\\": "src/"
+        }
+    },
+    "require": {
+        "vlucas/phpdotenv": "^5.6"
+    }
+}

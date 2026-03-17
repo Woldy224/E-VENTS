@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# PHP
+*.phar
+composer.lock
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Test coverage
+coverage/
