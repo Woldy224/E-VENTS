@@ -14,8 +14,8 @@ function App() {
   const LEGAL_DISCLAIMER_KEY = 'secure_events_legal_disclaimer_v1';
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  // Default to the login screen as requested.
-  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>('login');
+  // Default to 'events' if a token exists, otherwise 'login'. This prevents the login screen flash on refresh.
+  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>(getAuthToken() ? 'events' : 'login');
   const [isInitializing, setIsInitializing] = useState(true);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
