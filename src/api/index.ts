@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost/Projet/Secure-Events/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://api-production-68cd.up.railway.app/api";
 
 let authToken: string | null = null;
 
