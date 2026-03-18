@@ -55,14 +55,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ----------------------------------------------------------
 // Database - Railway credentials
 // ----------------------------------------------------------
-$dbHost = $_ENV['PGHOST'] ?? 'postgres.railway.internal';
-$dbPort = $_ENV['PGPORT'] ?? '5432';
-$dbName = $_ENV['PGDATABASE'] ?? 'railway';
-$dbUser = $_ENV['PGUSER'] ?? 'postgres';
-$dbPass = $_ENV['PGPASSWORD'] ?? 'SRsOxQaLnprubWCywbQTyAWaNyqsoFPX';
+$databaseUrl = getenv('DATABASE_URL') ?: ($_ENV['DATABASE_URL'] ?? null);
+
+if ($databaseUrl) {
+    // Parsing DATABASE_URL (format: postgres://user:pass@host:port/dbname)
+    $dbParts = parse_url($databaseUrl);
+    $dbHost = $dbParts['host'] ?? 'localhost';
+    $dbPort = $dbParts['port'] ?? '5432';
+    $dbName = ltrim($dbParts['path'] ?? '', '/');
+    $dbUser = $dbParts['user'] ?? 'postgres';
+    $dbPass = $dbParts['pass'] ?? '';
+} else {
+    // Fallback to individual variables
+    $dbHost = getenv('PGHOST') ?: ($_ENV['PGHOST'] ?? 'postgres.railway.internal');
+    $dbPort = getenv('PGPORT') ?: ($_ENV['PGPORT'] ?? '5432');
+    $dbName = getenv('PGDATABASE') ?: ($_ENV['PGDATABASE'] ?? 'railway');
+    $dbUser = getenv('PGUSER') ?: ($_ENV['PGUSER'] ?? 'postgres');
+    $dbPass = getenv('PGPASSWORD') ?: ($_ENV['PGPASSWORD'] ?? 'SRsOxQaLnprubWCywbQTyAWaNyqsoFPX');
+}
 
 try {
+    // Add sslmode=require for cloud databases if not explicitly disabled
     $dsn = "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName}";
+    if (!str_contains($dbHost, 'localhost') && !str_contains($dbHost, '127.0.0.1')) {
+        $dsn .= ";sslmode=require";
+    }
+    
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
