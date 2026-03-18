@@ -21,10 +21,12 @@ $dotenv->load();
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// retire tout bagay anvan index.php
-$path = explode('index.php', $path);
-$path = isset($path[1]) ? $path[1] : '/';
+// For Railway/Clean URLs: strip /api if it's at the start
+if (strpos($path, '/api') === 0) {
+    $path = substr($path, 4);
+}
 
+// Ensure it starts with / and has no trailing slash (except for root)
 $path = '/' . trim($path, '/');
 
 /*
@@ -38,6 +40,7 @@ $routes = [
     '/events' => 'events.php',
     '/proposals' => 'proposals.php',
     '/tickets' => 'tickets.php',
+    '/migrate' => 'migrate.php',
 ];
 
 foreach ($routes as $route => $file) {
@@ -47,9 +50,7 @@ foreach ($routes as $route => $file) {
     }
 }
 
-header('Content-Type: application/json');
-echo json_encode(["debug" => "USER INSERTED"]);
-exit;
+
 echo json_encode([
     "name" => "Ayiti Events API",
     "version" => "1.0.0",
