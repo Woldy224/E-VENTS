@@ -59,8 +59,8 @@ export default function Header({
                   key={item.id}
                   onClick={() => onViewChange(item.id)}
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${currentView === item.id
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                     }`}
                 >
                   <Icon className="h-4 w-4 mr-2" />
@@ -72,13 +72,13 @@ export default function Header({
 
           <div className="flex items-center space-x-4">
 
-            {/* Bouton Admin */}
+            {/* Bouton Admin (affiche seulement si personne n'est connecté ET qu'on n'est pas déjà en mode admin) */}
             {!isAuthenticated && !isAdmin && (
               <button
                 onClick={onToggleAdmin}
-                className="hidden md:block px-4 py-2 text-sm font-medium rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                className="hidden md:block px-4 py-2 text-sm font-medium rounded-md transition-colors  text-white"
               >
-                Accès Admin
+                EA
               </button>
             )}
             {isAuthenticated ? (
@@ -122,8 +122,8 @@ export default function Header({
                       onToggleMobileMenu();
                     }}
                     className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${currentView === item.id
-                        ? 'text-blue-600 bg-blue-50'
-                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                       }`}
                   >
                     <Icon className="h-4 w-4 mr-2" />
@@ -151,7 +151,7 @@ export default function Header({
                         onToggleAdmin();
                         onToggleMobileMenu();
                       }}
-                      className="w-full px-3 py-2 text-sm font-medium rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                      className="w-full px-3 py-2 text-sm font-medium rounded-md transition-colors bg-blue-600 text-white hover:bg-white-700"
                     >
                       Admin
                     </button>

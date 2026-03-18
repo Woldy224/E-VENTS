@@ -32,16 +32,19 @@ export default function AdminDashboard({
   const [editingEvent, setEditingEvent] = useState<Event | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const totalRevenue = events.reduce((sum, event) => sum + (event.soldTickets * event.price), 0);
-  const totalTicketsSold = events.reduce((sum, event) => sum + event.soldTickets, 0);
-  const pendingProposals = proposals.filter(p => p.status === 'pending').length;
+  const safeEvents = Array.isArray(events) ? events : [];
+  const safeProposals = Array.isArray(proposals) ? proposals : [];
 
-  const filteredEvents = events.filter(event =>
+  const totalRevenue = safeEvents.reduce((sum, event) => sum + (event.soldTickets * event.price), 0);
+  const totalTicketsSold = safeEvents.reduce((sum, event) => sum + event.soldTickets, 0);
+  const pendingProposals = safeProposals.filter(p => p.status === 'pending').length;
+
+  const filteredEvents = safeEvents.filter(event =>
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredProposals = proposals.filter(proposal =>
+  const filteredProposals = safeProposals.filter(proposal =>
     proposal.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     proposal.contactName.toLowerCase().includes(searchTerm.toLowerCase())
   );

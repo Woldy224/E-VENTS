@@ -92,7 +92,7 @@ function App() {
   const loadProposals = async () => {
     try {
       const proposalsList = await api.proposals.list();
-      setProposals(proposalsList);
+      setProposals(Array.isArray(proposalsList) ? proposalsList : []);
     } catch (error) {
       console.error('Failed to load proposals:', error);
     }
