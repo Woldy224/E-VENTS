@@ -14,8 +14,8 @@ function App() {
   const LEGAL_DISCLAIMER_KEY = 'secure_events_legal_disclaimer_v1';
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  // Default to the login/registration screen so users authenticate before seeing the home page.
-  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>('login');
+  // Default to 'events' view so users can browse without logging in.
+  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>('events');
   const [isInitializing, setIsInitializing] = useState(true);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -61,14 +61,14 @@ function App() {
         })
         .catch(() => {
           sessionStorage.removeItem("auth_token");
-          setCurrentView('login');
+          setCurrentView('events');
         })
         .finally(() => {
           setIsInitializing(false);
         });
     } else {
-      // No saved session -> show login
-      setCurrentView('login');
+      // No saved session -> show events by default
+      setCurrentView('events');
       setIsInitializing(false);
     }
 

@@ -72,13 +72,13 @@ export default function Header({
 
           <div className="flex items-center space-x-4">
 
-            {/* Bouton Admin (affiche seulement si personne n'est connecté ET qu'on n'est pas déjà en mode admin) */}
+            {/* Bouton Admin */}
             {!isAuthenticated && !isAdmin && (
               <button
                 onClick={onToggleAdmin}
-                className="hidden md:block px-4 py-2 text-sm font-medium rounded-md transition-colors  text-white"
+                className="hidden md:block px-4 py-2 text-sm font-medium rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700"
               >
-                EA
+                Accès Admin
               </button>
             )}
             {isAuthenticated ? (
