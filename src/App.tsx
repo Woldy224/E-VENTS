@@ -14,8 +14,8 @@ function App() {
   const LEGAL_DISCLAIMER_KEY = 'secure_events_legal_disclaimer_v1';
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  // Default to 'events' view so users can browse without logging in.
-  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>('events');
+  // Default to the login screen as requested.
+  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>('login');
   const [isInitializing, setIsInitializing] = useState(true);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -61,14 +61,14 @@ function App() {
         })
         .catch(() => {
           sessionStorage.removeItem("auth_token");
-          setCurrentView('events');
+          setCurrentView('login');
         })
         .finally(() => {
           setIsInitializing(false);
         });
     } else {
-      // No saved session -> show events by default
-      setCurrentView('events');
+      // No saved session -> show login first
+      setCurrentView('login');
       setIsInitializing(false);
     }
 
@@ -371,7 +371,7 @@ function App() {
         onAccept={handleAcceptLegalDisclaimer}
         onDecline={handleDeclineLegalDisclaimer}
       />
-      {!isInitializing && (
+      {!isInitializing && currentView !== 'login' && currentView !== 'admin-login' && (
         <Header
           isAdmin={isAdminAuthenticated || (currentUser?.role === 'admin')}
           currentView={currentView}
@@ -386,7 +386,7 @@ function App() {
 
       <main>{renderContent()}</main>
 
-      {!isInitializing && (
+      {!isInitializing && currentView !== 'login' && currentView !== 'admin-login' && (
         <footer className="bg-white border-t border-gray-200 mt-16">
           <div className="max-w-7xl mx-auto px-4 py-8">
             <div className="text-center text-gray-600">
