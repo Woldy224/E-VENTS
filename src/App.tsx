@@ -392,7 +392,7 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 py-8">
             <div className="text-center text-gray-600">
               <p>
-                &copy; 2025 AYITI EVENTS. Tous droits réservés.
+                &copy; 2026 E-VENTS. Tous droits réservés.
                 Une plateforme développée par DAMCO. Toute reproduction ou utilisation non autorisée est strictement interdite.
               </p>
             </div>

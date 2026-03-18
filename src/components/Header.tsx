@@ -151,7 +151,7 @@ export default function Header({
                         onToggleAdmin();
                         onToggleMobileMenu();
                       }}
-                      className="w-full px-3 py-2 text-sm font-medium rounded-md transition-colors bg-blue-600 text-white hover:bg-white-700"
+                      className="w-full px-3 py-2 text-sm font-medium rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700"
                     >
                       Admin
                     </button>

@@ -43,6 +43,7 @@ $routes = [
     '/proposals' => 'proposals.php',
     '/tickets' => 'tickets.php',
     '/migrate' => 'migrate.php',
+    '/check_db' => 'check_db.php',
 ];
 
 foreach ($routes as $route => $file) {

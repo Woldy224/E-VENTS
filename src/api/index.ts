@@ -25,6 +25,8 @@ function joinUrl(base: string, endpoint: string) {
 }
 
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
+  const url = joinUrl(API_BASE, endpoint);
+  console.log("🚀 API Request to:", url);
   const token = getAuthToken();
 
   const headers: Record<string, string> = {
