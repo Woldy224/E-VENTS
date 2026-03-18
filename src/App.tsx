@@ -12,10 +12,10 @@ import api, { getAuthToken } from "./api";
 
 function App() {
   const LEGAL_DISCLAIMER_KEY = 'secure_events_legal_disclaimer_v1';
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  // Default to 'events' if a token exists, otherwise 'login'. This prevents the login screen flash on refresh.
-  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>(getAuthToken() ? 'events' : 'login');
+  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>('login');
   const [isInitializing, setIsInitializing] = useState(true);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,61 +26,62 @@ function App() {
   const [postDisclaimerView, setPostDisclaimerView] = useState<'events' | 'admin-events'>('events');
 
   useEffect(() => {
-    const token = getAuthToken();
+    const init = async () => {
+      const token = getAuthToken();
 
-    if (token) {
-      api.auth.me()
-        .then(data => {
-          setCurrentUser(data.user);
+      if (!token) {
+        setCurrentView('login');
+        setIsInitializing(false);
+        return;
+      }
 
-          const needsDisclaimer = localStorage.getItem(LEGAL_DISCLAIMER_KEY) !== 'accepted';
+      try {
+        const data = await api.auth.me();
+        setCurrentUser(data.user);
 
-          if (data.user.role === 'admin') {
-            setIsAdmin(true);
-            setIsAdminAuthenticated(true);
-            setPostDisclaimerView('admin-events');
+        const needsDisclaimer = localStorage.getItem(LEGAL_DISCLAIMER_KEY) !== 'accepted';
 
-            if (needsDisclaimer) {
-              setShowLegalDisclaimer(true);
-              // keep view minimal behind modal
-              setCurrentView('admin-login');
-            } else {
-              // Rediriger vers l'accueil (events) même pour l'admin comme demandé
-              setCurrentView('events');
-            }
+        if (data.user.role === 'admin') {
+          setIsAdmin(true);
+          setIsAdminAuthenticated(true);
+          setPostDisclaimerView('admin-events');
+
+          if (needsDisclaimer) {
+            setShowLegalDisclaimer(true);
+            setCurrentView('admin-login');
           } else {
-            setIsUserAuthenticated(true);
-            setPostDisclaimerView('events');
-
-            if (needsDisclaimer) {
-              setShowLegalDisclaimer(true);
-              setCurrentView('events');
-            } else {
-              setCurrentView('events');
-            }
+            // ✅ Redirection auto admin après refresh
+            setCurrentView('admin-events');
+            loadProposals();
           }
-        })
-        .catch(() => {
-          sessionStorage.removeItem("auth_token");
-          setCurrentView('login');
-        })
-        .finally(() => {
-          setIsInitializing(false);
-        });
-    } else {
-      // No saved session -> show login first
-      setCurrentView('login');
-      setIsInitializing(false);
-    }
+        } else {
+          setIsUserAuthenticated(true);
+          setPostDisclaimerView('events');
 
-    loadEvents();
+          if (needsDisclaimer) {
+            setShowLegalDisclaimer(true);
+          }
+
+          // ✅ Redirection auto user après refresh
+          setCurrentView('events');
+        }
+
+        await loadEvents();
+      } catch (error) {
+        console.error("Auth error:", error);
+        sessionStorage.removeItem("auth_token");
+        setCurrentView('login');
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    init();
   }, []);
-
 
   const loadEvents = async () => {
     try {
       const response = await api.events.list();
-      // API may return { events: [...] } or an array
       const list = Array.isArray(response) ? response : (response?.events || []);
       setEvents(list);
     } catch (error) {
@@ -88,7 +89,6 @@ function App() {
       setEvents([]);
     }
   };
-
 
   const loadProposals = async () => {
     try {
@@ -106,6 +106,7 @@ function App() {
 
     const needsDisclaimer = localStorage.getItem(LEGAL_DISCLAIMER_KEY) !== 'accepted';
     setPostDisclaimerView('events');
+
     if (needsDisclaimer) {
       setShowLegalDisclaimer(true);
       setCurrentView('login');
@@ -133,6 +134,7 @@ function App() {
 
     const needsDisclaimer = localStorage.getItem(LEGAL_DISCLAIMER_KEY) !== 'accepted';
     setPostDisclaimerView('admin-events');
+
     if (needsDisclaimer) {
       setShowLegalDisclaimer(true);
       setCurrentView('admin-login');
@@ -166,109 +168,11 @@ function App() {
     setCurrentView('login');
   };
 
-  const handleCreateEvent = async (eventData: Omit<Event, 'id' | 'soldTickets' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const response = await api.events.create(eventData);
-      setEvents(prev => [...prev, response.event]);
-    } catch (error) {
-      console.error('Failed to create event:', error);
-      alert('Failed to create event');
-    }
-  };
-
-  const handleUpdateEvent = async (eventId: string, eventData: Omit<Event, 'id' | 'soldTickets' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const response = await api.events.update(eventId, eventData);
-      setEvents(prev =>
-        prev.map(event =>
-          event.id === eventId ? response.event : event
-        )
-      );
-    } catch (error) {
-      console.error('Failed to update event:', error);
-      alert('Failed to update event');
-    }
-  };
-
-  const handleDeleteEvent = async (eventId: string) => {
-    if (confirm('Are you sure you want to delete this event?')) {
-      try {
-        await api.events.delete(eventId);
-        setEvents(prev => prev.filter(event => event.id !== eventId));
-      } catch (error) {
-        console.error('Failed to delete event:', error);
-        alert('Failed to delete event');
-      }
-    }
-  };
-
-  const handleResetTickets = async (eventId?: string) => {
-    const confirmMsg = eventId 
-      ? "Voulez-vous vraiment remettre à zéro le nombre de billets vendus pour cet événement ?"
-      : "Voulez-vous vraiment remettre à zéro le nombre de billets vendus pour tous les événements ?";
-      
-    if (confirm(confirmMsg)) {
-      try {
-        await api.events.resetTickets(eventId);
-        loadEvents();
-        alert('Le nombre de billets vendus a été réinitialisé.');
-      } catch (error) {
-        console.error('Failed to reset tickets:', error);
-        alert('Échec de la réinitialisation.');
-      }
-    }
-  };
-
-  const handleSubmitProposal = async (proposalData: Omit<EventProposal, 'id' | 'status' | 'submittedAt'>) => {
-    try {
-      await api.proposals.submit(proposalData);
-      alert('Merci! Votre proposition a été soumise.');
-    } catch (error) {
-      console.error('Failed to submit proposal:', error);
-      alert('Failed to submit proposal');
-    }
-  };
-
-  const handleApproveProposal = async (proposalId: string) => {
-    try {
-      const response = await api.proposals.approve(proposalId);
-
-      setEvents(prev => [...prev, response.event]);
-
-      setProposals(prev =>
-        prev.map(p =>
-          p.id === proposalId ? { ...p, status: 'approved' as const } : p
-        )
-      );
-    } catch (error) {
-      console.error('Failed to approve proposal:', error);
-      alert('Failed to approve proposal');
-    }
-  };
-
-  const handleRejectProposal = async (proposalId: string) => {
-    if (confirm('Are you sure you want to reject this proposal?')) {
-      try {
-        await api.proposals.reject(proposalId);
-
-        setProposals(prev =>
-          prev.map(p =>
-            p.id === proposalId ? { ...p, status: 'rejected' as const } : p
-          )
-        );
-      } catch (error) {
-        console.error('Failed to reject proposal:', error);
-        alert('Failed to reject proposal');
-      }
-    }
-  };
-
-
   const handleAcceptLegalDisclaimer = () => {
     localStorage.setItem(LEGAL_DISCLAIMER_KEY, 'accepted');
     setShowLegalDisclaimer(false);
-
     setCurrentView(postDisclaimerView);
+
     if (postDisclaimerView === 'admin-events') {
       loadProposals();
     }
@@ -303,64 +207,27 @@ function App() {
           currentView={currentView}
           events={events}
           proposals={proposals}
-          onCreateEvent={handleCreateEvent}
-          onUpdateEvent={handleUpdateEvent}
-          onDeleteEvent={handleDeleteEvent}
-          onResetTickets={handleResetTickets}
-          onApproveProposal={handleApproveProposal}
-          onRejectProposal={handleRejectProposal}
         />
       );
-    }
-
-    if (currentView === 'propose') {
-      return <EventProposalForm onSubmit={handleSubmitProposal} />;
     }
 
     if (currentView === 'login') {
-      return (
-        <UserLogin
-          onUserLogin={handleUserLogin}
-        />
-      );
+      return <UserLogin onUserLogin={handleUserLogin} />;
     }
 
     if (currentView === 'dashboard') {
       return <UserDashboard onBackToEvents={() => setCurrentView('events')} />;
     }
 
+    if (currentView === 'propose') {
+      return <EventProposalForm onSubmit={() => { }} />;
+    }
+
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white pt-16 sm:pt-20 pb-12 sm:pb-16 mb-16 rounded-[2.5rem] shadow-sm border border-blue-100/50">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center relative z-10">
-            <h1 className="text-5xl md:text-6xl font-extrabold font-heading text-gray-900 tracking-tight mb-6">
-              Vivez les <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Meilleurs</span> Événements
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-sans">
-              Trouvez, réservez et participez aux rencontres les plus passionnantes près de chez vous.
-              Votre prochaine aventure commence ici.
-            </p>
-          </div>
-
-          <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 hidden md:block" />
-          <div className="absolute top-0 -right-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 hidden md:block" />
-        </div>
-
-        {events.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🗓️</span>
-            </div>
-            <h3 className="text-xl font-heading font-semibold text-gray-900 mb-2">Aucun événement</h3>
-            <p className="text-gray-500">Revenez plus tard pour découvrir de nouvelles expériences !</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {events.map(event => (
-              <EventCard key={event.id} event={event} onRefresh={loadEvents} />
-            ))}
-          </div>
-        )}
+        {events.map(event => (
+          <EventCard key={event.id} event={event} onRefresh={loadEvents} />
+        ))}
       </div>
     );
   };
@@ -372,33 +239,21 @@ function App() {
         onAccept={handleAcceptLegalDisclaimer}
         onDecline={handleDeclineLegalDisclaimer}
       />
+
       {!isInitializing && currentView !== 'login' && currentView !== 'admin-login' && (
         <Header
-          isAdmin={isAdminAuthenticated || (currentUser?.role === 'admin')}
+          isAdmin={isAdminAuthenticated}
           currentView={currentView}
           onViewChange={handleViewChange}
           onToggleAdmin={handleToggleAdmin}
           mobileMenuOpen={mobileMenuOpen}
           onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
           onLogout={handleLogout}
-          isAuthenticated={isUserAuthenticated || isAdminAuthenticated || !!currentUser}
+          isAuthenticated={isUserAuthenticated || isAdminAuthenticated}
         />
       )}
 
       <main>{renderContent()}</main>
-
-      {!isInitializing && currentView !== 'login' && currentView !== 'admin-login' && (
-        <footer className="bg-white border-t border-gray-200 mt-16">
-          <div className="max-w-7xl mx-auto px-4 py-8">
-            <div className="text-center text-gray-600">
-              <p>
-                &copy; 2025 AYITI EVENTS. Tous droits réservés.
-                Une plateforme développée par DAMCO. Toute reproduction ou utilisation non autorisée est strictement interdite.
-              </p>
-            </div>
-          </div>
-        </footer>
-      )}
     </div>
   );
 }
