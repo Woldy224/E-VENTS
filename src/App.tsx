@@ -45,7 +45,8 @@ function App() {
               // keep view minimal behind modal
               setCurrentView('admin-login');
             } else {
-              setCurrentView('admin-events');
+              // Rediriger vers l'accueil (events) même pour l'admin comme demandé
+              setCurrentView('events');
             }
           } else {
             setIsUserAuthenticated(true);
