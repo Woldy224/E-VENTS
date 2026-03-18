@@ -58,13 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $databaseUrl = getenv('DATABASE_URL') ?: ($_ENV['DATABASE_URL'] ?? null);
 
 if ($databaseUrl) {
-    // Parsing DATABASE_URL (format: postgres://user:pass@host:port/dbname)
+    // Parsing DATABASE_URL (format: postgresql://user:pass@host:port/dbname)
     $dbParts = parse_url($databaseUrl);
-    $dbHost = $dbParts['host'] ?? 'localhost';
-    $dbPort = $dbParts['port'] ?? '5432';
-    $dbName = ltrim($dbParts['path'] ?? '', '/');
-    $dbUser = $dbParts['user'] ?? 'postgres';
-    $dbPass = $dbParts['pass'] ?? '';
+    if ($dbParts === false) {
+        $dbHost = 'localhost'; $dbPort = '5432'; $dbName = 'railway'; $dbUser = 'postgres'; $dbPass = '';
+    } else {
+        $dbHost = $dbParts['host'] ?? 'localhost';
+        $dbPort = $dbParts['port'] ?? '5432';
+        $dbName = ltrim($dbParts['path'] ?? '', '/');
+        $dbUser = isset($dbParts['user']) ? urldecode($dbParts['user']) : 'postgres';
+        $dbPass = isset($dbParts['pass']) ? urldecode($dbParts['pass']) : '';
+    }
 } else {
     // Fallback to individual variables
     $dbHost = getenv('PGHOST') ?: ($_ENV['PGHOST'] ?? 'postgres.railway.internal');
@@ -76,21 +80,39 @@ if ($databaseUrl) {
 
 try {
     // Add sslmode=require for cloud databases if not explicitly disabled
-    $dsn = "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName}";
+    $dsnParts = [
+        "host={$dbHost}",
+        "port={$dbPort}",
+        "dbname={$dbName}"
+    ];
+    
+    // Auto-enable SSL for remote connections
     if (!str_contains($dbHost, 'localhost') && !str_contains($dbHost, '127.0.0.1')) {
-        $dsn .= ";sslmode=require";
+        $dsnParts[] = "sslmode=require";
     }
+    
+    $dsn = "pgsql:" . implode(';', $dsnParts);
     
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT => 5, // 5 seconds timeout
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode([
-        'error' => 'Database connection error', 
-        'details' => $e->getMessage()
-    ]);
+    $errorInfo = [
+        'error' => 'Database connection error',
+        'details' => $e->getMessage(),
+        'debug' => [
+            'host' => $dbHost,
+            'port' => $dbPort,
+            'db' => $dbName,
+            'user' => $dbUser,
+            'url_detected' => !empty($databaseUrl),
+            'dsn' => "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName};sslmode=..."
+        ]
+    ];
+    echo json_encode($errorInfo);
     exit();
 }
 
