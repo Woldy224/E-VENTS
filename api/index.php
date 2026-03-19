@@ -10,6 +10,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// Standard Apache workaround for Authorization header
+if (!isset($_SERVER['HTTP_AUTHORIZATION']) && function_exists('getallheaders')) {
+    $headers = getallheaders();
+    if (isset($headers['Authorization'])) {
+        $_SERVER['HTTP_AUTHORIZATION'] = $headers['Authorization'];
+    } elseif (isset($headers['authorization'])) {
+        $_SERVER['HTTP_AUTHORIZATION'] = $headers['authorization'];
+    }
+}
+
 require __DIR__ . '/vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
