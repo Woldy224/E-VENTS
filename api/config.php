@@ -134,12 +134,13 @@ function getSessionUser(PDO $pdo): ?array {
     }
     if (!$token) return null;
 
+    $now = date('Y-m-d H:i:s');
     $stmt = $pdo->prepare("
         SELECT u.* FROM users u
         JOIN sessions s ON u.id = s.user_id
-        WHERE s.session_token = ? AND s.expires_at > NOW()
+        WHERE s.session_token = ? AND s.expires_at > ?
     ");
-    $stmt->execute([$token]);
+    $stmt->execute([$token, $now]);
     return $stmt->fetch() ?: null;
 }
 
