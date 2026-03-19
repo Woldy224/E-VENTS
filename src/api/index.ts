@@ -38,7 +38,7 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(joinUrl(API_BASE, endpoint), {
+  const response = await fetch(url, {
     ...options,
     headers,
   });
@@ -53,155 +53,67 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(data.error || "Request failed");
+    throw new Error(data.error || "Une erreur est survenue");
   }
 
   return data;
 }
 
-/* ================= AUTH ================= */
-
-const auth = {
-  register(name: string, surname: string, email: string, password?: string) {
-    return apiRequest("auth.php?action=register", {
-      method: "POST",
-      body: JSON.stringify({ name, surname, email, password }),
-    }).then((data) => {
-      if (data?.token) setAuthToken(data.token);
-      return data;
-    });
-  },
-
-  login(email: string, password?: string) {
-    return apiRequest("auth.php?action=login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }).then((data) => {
-      if (data?.token) setAuthToken(data.token);
-      return data;
-    });
-  },
-
-  adminLogin(email: string, password: string) {
-    return apiRequest("auth.php?action=admin-login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }).then((data) => {
-      if (data?.token) setAuthToken(data.token);
-      return data;
-    });
-  },
-
-  logout() {
-    return apiRequest("auth.php?action=logout", {
-      method: "POST",
-    }).finally(() => setAuthToken(null));
-  },
-
-  me() {
-    return apiRequest("auth.php?action=me");
-  },
-};
-
-/* ================= EVENTS ================= */
-
-const events: {
-  list(): Promise<any>;
-  myEvents(): Promise<any>;
-  get(id: string): Promise<any>;
-  create(eventData: any): Promise<any>;
-  update(id: string, eventData: any): Promise<any>;
-  delete(id: string): Promise<any>;
-  resetTickets(id?: string): Promise<any>;
-} = {
-  list() {
-    return apiRequest("events.php");
-  },
-  myEvents() {
-    return apiRequest("events.php?action=my-events");
-  },
-  get(id: string) {
-    return apiRequest(`events.php?action=get&id=${encodeURIComponent(id)}`);
-  },
-
-  create(eventData: any) {
-    return apiRequest("events.php?action=create", {
-      method: "POST",
-      body: JSON.stringify(eventData),
-    });
-  },
-
-  update(id: string, eventData: any) {
-    return apiRequest(`events.php?action=update&id=${encodeURIComponent(id)}`, {
-      method: "PUT",
-      body: JSON.stringify(eventData),
-    });
-  },
-
-  delete(id: string) {
-    return apiRequest(`events.php?action=delete&id=${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
-  },
-  resetTickets(id?: string) {
-    const url = id 
-      ? `events.php?action=reset-tickets&id=${encodeURIComponent(id)}`
-      : "events.php?action=reset-tickets";
-    return apiRequest(url, {
-      method: "POST",
-    });
-  },
-};
-
-/* ================= PROPOSALS ================= */
-
-const proposals = {
-  list() {
-    return apiRequest("proposals.php?action=list");
-  },
-
-  submit(data: any) {
-    return apiRequest("proposals.php?action=submit", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  approve(id: string) {
-    return apiRequest(`proposals.php?action=approve&id=${encodeURIComponent(id)}`, {
-      method: "POST",
-    });
-  },
-
-  reject(id: string) {
-    return apiRequest(`proposals.php?action=reject&id=${encodeURIComponent(id)}`, {
-      method: "POST",
-    });
-  },
-};
-
-/* ================= TICKETS ================= */
-
-const tickets = {
-  purchase(data: any) {
-    return apiRequest("tickets.php?action=purchase", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  myTickets() {
-    return apiRequest("tickets.php?action=my-tickets");
-  },
-
-  eventSales(eventId: string) {
-    return apiRequest(`tickets.php?action=event-sales&id=${encodeURIComponent(eventId)}`);
-  },
-};
-
 export default {
-  auth,
-  events,
-  proposals,
-  tickets,
+  auth: {
+    register: (name: string, surname: string, email: string, password: string) =>
+      apiRequest("auth?action=register", {
+        method: "POST",
+        body: JSON.stringify({ name, surname, email, password }),
+      }),
+    login: (email: string, password: string) =>
+      apiRequest("auth?action=login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      }),
+    adminLogin: (email: string, password: string) =>
+      apiRequest("auth?action=admin-login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      }),
+    logout: () => apiRequest("auth?action=logout", { method: "POST" }),
+    me: () => apiRequest("auth?action=me", { method: "GET" }),
+  },
+  events: {
+    list: () => apiRequest("events?action=list", { method: "GET" }),
+    create: (eventData: any) =>
+      apiRequest("events?action=create", {
+        method: "POST",
+        body: JSON.stringify(eventData),
+      }),
+    update: (id: string, eventData: any) =>
+      apiRequest(`events?action=update&id=${id}`, {
+        method: "PUT",
+        body: JSON.stringify(eventData),
+      }),
+    delete: (id: string) =>
+      apiRequest(`events?action=delete&id=${id}`, { method: "DELETE" }),
+    resetTickets: (eventId?: string) => 
+      apiRequest(`events?action=reset-tickets${eventId ? `&id=${eventId}` : ''}`, { method: 'POST' }),
+  },
+  proposals: {
+    submit: (proposalData: any) =>
+      apiRequest("proposals?action=submit", {
+        method: "POST",
+        body: JSON.stringify(proposalData),
+      }),
+    list: () => apiRequest("proposals?action=list", { method: "GET" }),
+    approve: (id: string) =>
+      apiRequest(`proposals?action=approve&id=${id}`, { method: "POST" }),
+    reject: (id: string) =>
+      apiRequest(`proposals?action=reject&id=${id}`, { method: "POST" }),
+  },
+  tickets: {
+    purchase: (eventId: string, quantity: number, totalAmount: number) =>
+      apiRequest("tickets?action=purchase", {
+        method: "POST",
+        body: JSON.stringify({ eventId, quantity, totalAmount }),
+      }),
+    myTickets: () => apiRequest("tickets?action=my-tickets", { method: "GET" }),
+  },
 };
