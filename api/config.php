@@ -4,54 +4,8 @@
 // ----------------------------------------------------------
 
 // Always respond JSON for API
-header('Content-Type: application/json');
-
-// ----------------------------------------------------------
-// Load .env if exists (optional, local dev)
-// ----------------------------------------------------------
-if (file_exists(__DIR__ . '/.env')) {
-    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        $line = trim($line);
-        if ($line === '' || str_starts_with($line, '#')) continue;
-        if (!str_contains($line, '=')) continue;
-        [$name, $value] = explode('=', $line, 2);
-        $_ENV[trim($name)] = trim($value);
-        putenv(trim($name) . '=' . trim($value));
-    }
-}
-
-// ----------------------------------------------------------
-// CORS - allow local dev + Railway frontend
-// ----------------------------------------------------------
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedOrigins = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://e-vents.ct.ws',
-    'http://e-vents.ct.ws',
-];
-
-if (!empty($_ENV['ALLOWED_ORIGINS'])) {
-    $envOrigins = array_map('trim', explode(',', $_ENV['ALLOWED_ORIGINS']));
-    $allowedOrigins = array_merge($allowedOrigins, $envOrigins);
-    $allowedOrigins = array_values(array_unique($allowedOrigins));
-}
-
-if ($origin && in_array($origin, $allowedOrigins, true)) {
-    header('Access-Control-Allow-Origin: ' . $origin);
-    header('Vary: Origin');
-} else {
-    header('Access-Control-Allow-Origin: *');
-}
-
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-// Preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
+if (!headers_sent()) {
+    header('Content-Type: application/json');
 }
 
 // ----------------------------------------------------------
