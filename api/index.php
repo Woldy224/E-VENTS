@@ -1,21 +1,20 @@
 <?php
-// Configuration CORS globale
+// Configuration CORS globale// ----------------------------------------------------------------
+// CORS HEADERS (Must be at the very top)
+// ----------------------------------------------------------------
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedOrigins = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://e-vents.ct.ws',
-    'http://e-vents.ct.ws'
-];
 
-if (in_array($origin, $allowedOrigins)) {
-    header('Access-Control-Allow-Origin: ' . $origin);
+// For debugging: Accept the origin if it looks like ours
+if ($origin) {
+    header("Access-Control-Allow-Origin: $origin");
 } else {
-    header('Access-Control-Allow-Origin: ' . ($origin ?: '*'));
+    header("Access-Control-Allow-Origin: *");
 }
 
+header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Max-Age: 86400'); // Cache preflight for 24h, X-Requested-With');
 header('Access-Control-Allow-Credentials: true');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
