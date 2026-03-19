@@ -76,7 +76,7 @@ export default function Header({
             {!isAuthenticated && !isAdmin && (
               <button
                 onClick={onToggleAdmin}
-                className="hidden md:block px-4 py-2 text-sm font-medium rounded-md transition-colors  text-white"
+                className="hidden md:block px-4 py-2 text-sm font-medium rounded-md transition-colors  text-white bg-blue-600 hover:bg-blue-700 "
               >
                 EA
               </button>
