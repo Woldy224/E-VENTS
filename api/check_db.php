@@ -12,7 +12,16 @@ try {
         'type' => 'PostgreSQL (Railway)'
     ];
 
-    // 2. Tables Check
+    // 2. Request Headers Debug
+    $headers = function_exists('getallheaders') ? getallheaders() : [];
+    $stats['debug_headers'] = [
+        'Authorization_Detected' => isset($headers['Authorization']) || isset($headers['authorization']) || isset($_SERVER['HTTP_AUTHORIZATION']),
+        'Authorization_Value_Prefix' => isset($headers['Authorization']) ? substr($headers['Authorization'], 0, 10) . '...' : (isset($_SERVER['HTTP_AUTHORIZATION']) ? substr($_SERVER['HTTP_AUTHORIZATION'], 0, 10) . '...' : 'NONE'),
+        'All_Header_Keys' => array_keys($headers),
+        'HTTP_ORIGIN' => $_SERVER['HTTP_ORIGIN'] ?? 'NOT_SET'
+    ];
+
+    // 3. Tables Check
     $tables = ['users', 'events', 'sessions', 'event_proposals', 'ticket_purchases'];
     $stats['tables'] = [];
     
@@ -21,7 +30,7 @@ try {
         $stats['tables'][$table] = $stmt->fetchColumn();
     }
 
-    // 3. User Details (To verify Admin)
+    // 4. User Details
     $stmt = $pdo->query("SELECT id, email, role, name FROM users");
     $stats['users_list'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
