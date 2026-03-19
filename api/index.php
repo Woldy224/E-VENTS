@@ -1,3 +1,4 @@
+<?php
 // Configuration CORS globale
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowedOrigins = [
