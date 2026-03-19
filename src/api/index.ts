@@ -5,15 +5,15 @@ let authToken: string | null = null;
 export function setAuthToken(token: string | null) {
   authToken = token;
   if (token) {
-    sessionStorage.setItem("auth_token", token);
+    localStorage.setItem("auth_token", token);
   } else {
-    sessionStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_token");
   }
 }
 
 export function getAuthToken(): string | null {
   if (!authToken) {
-    authToken = sessionStorage.getItem("auth_token");
+    authToken = localStorage.getItem("auth_token");
   }
   return authToken;
 }
@@ -26,6 +26,7 @@ function joinUrl(base: string, endpoint: string) {
 
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const token = getAuthToken();
+  if (token) console.log("🔑 Auth Token found:", token.substring(0, 8) + "...");
   const separator = endpoint.includes("?") ? "&" : "?";
   const finalEndpoint = token ? `${endpoint}${separator}token=${token}` : endpoint;
   const url = joinUrl(API_BASE, finalEndpoint);
