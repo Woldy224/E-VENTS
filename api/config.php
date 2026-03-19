@@ -127,11 +127,25 @@ function generateSessionToken(): string {
 
 function getSessionUser(PDO $pdo): ?array {
     $headers = function_exists('getallheaders') ? getallheaders() : [];
-    $token = $headers['Authorization'] ?? $headers['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+    
+    // Case-insensitive search for Authorization header
+    $token = null;
+    foreach ($headers as $key => $value) {
+        if (strtolower($key) === 'authorization') {
+            $token = $value;
+            break;
+        }
+    }
+    
+    if (!$token && isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $token = $_SERVER['HTTP_AUTHORIZATION'];
+    }
 
     if ($token) {
-        $token = str_replace('Bearer ', '', $token);
+        // Case-insensitive replacement of 'Bearer '
+        $token = preg_replace('/^Bearer\s+/i', '', $token);
     }
+    
     if (!$token) return null;
 
     $now = date('Y-m-d H:i:s');
