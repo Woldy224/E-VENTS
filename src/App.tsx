@@ -321,6 +321,7 @@ function App() {
       return (
         <UserLogin
           onUserLogin={handleUserLogin}
+          onToggleAdmin={handleToggleAdmin}
         />
       );
     }
@@ -372,7 +373,7 @@ function App() {
         onAccept={handleAcceptLegalDisclaimer}
         onDecline={handleDeclineLegalDisclaimer}
       />
-      {!isInitializing && (
+      {!isInitializing && currentView !== 'login' && currentView !== 'admin-login' && (
         <Header
           isAdmin={isAdminAuthenticated || (currentUser?.role === 'admin')}
           currentView={currentView}
@@ -387,7 +388,7 @@ function App() {
 
       <main>{renderContent()}</main>
 
-      {!isInitializing && (
+      {!isInitializing && currentView !== 'login' && currentView !== 'admin-login' && (
         <footer className="bg-white border-t border-gray-200 mt-16">
           <div className="max-w-7xl mx-auto px-4 py-8">
             <div className="text-center text-gray-600">

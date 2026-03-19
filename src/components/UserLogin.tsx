@@ -3,9 +3,10 @@ import api from '../api';
 
 interface UserLoginProps {
   onUserLogin: () => void;
+  onToggleAdmin: () => void;
 }
 
-const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin }) => {
+const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin, onToggleAdmin }) => {
   const [mode, setMode] = useState<"menu" | "register" | "login">("menu");
 
   const [name, setName] = useState('');
@@ -111,11 +112,20 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin }) => {
               </div>
 
               <button
-                onClick={() => setMode("register")}
-                className="w-full bg-white text-gray-900 border-2 border-gray-200 py-3.5 px-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all"
+                onClick={onUserLogin}
+                className="w-full bg-blue-500/10 text-blue-700 py-3.5 px-4 rounded-xl font-semibold hover:bg-blue-500/20 transition-all border border-blue-200"
               >
-                Créer un compte
+                Continuer sans se connecter
               </button>
+
+              <div className="pt-4 text-center">
+                <button
+                  onClick={onToggleAdmin}
+                  className="text-sm font-medium text-gray-400 hover:text-blue-600 transition-colors"
+                >
+                  Accès Administration
+                </button>
+              </div>
             </div>
           )}
 
@@ -188,6 +198,15 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin }) => {
                   Se connecter
                 </button>
               </p>
+
+              <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+                <button
+                  onClick={onToggleAdmin}
+                  className="text-sm font-medium text-gray-400 hover:text-blue-600 transition-colors"
+                >
+                  Accès Administration
+                </button>
+              </div>
             </div>
           )}
 
@@ -256,6 +275,15 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin }) => {
                   S'inscrire
                 </button>
               </p>
+
+              <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+                <button
+                  onClick={onToggleAdmin}
+                  className="text-sm font-medium text-gray-400 hover:text-blue-600 transition-colors"
+                >
+                  Accès Administration
+                </button>
+              </div>
             </div>
           )}
         </div>
