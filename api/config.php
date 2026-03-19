@@ -28,6 +28,8 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowedOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'https://e-vents.ct.ws',
+    'http://e-vents.ct.ws',
 ];
 
 if (!empty($_ENV['ALLOWED_ORIGINS'])) {
