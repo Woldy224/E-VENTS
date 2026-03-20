@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../api';
+import api, { setAuthToken } from '../api';
 
 interface UserLoginProps {
   onUserLogin: () => void;
@@ -31,7 +31,13 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin, onToggleAdmin }) => 
     }
 
     try {
-      await api.auth.register(name, surname, email, password);
+      const data = await api.auth.register(name, surname, email, password);
+      console.log('🔍 User register response:', JSON.stringify(data));
+      const token = data?.token || data?.session_token;
+      if (token) {
+        setAuthToken(token);
+        console.log('✅ User token saved after registration');
+      }
       onUserLogin();
     } catch (err: any) {
       setError(err?.message || "Erreur lors de l'inscription");
@@ -53,7 +59,13 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin, onToggleAdmin }) => 
     setIsLoading(true);
 
     try {
-      await api.auth.login(loginEmail, password);
+      const data = await api.auth.login(loginEmail, password);
+      console.log('🔍 User login response:', JSON.stringify(data));
+      const token = data?.token || data?.session_token;
+      if (token) {
+        setAuthToken(token);
+        console.log('✅ User token saved after login');
+      }
       onUserLogin();
     } catch (err: any) {
       setError(err?.message || "Email ou mot de passe incorrect");
