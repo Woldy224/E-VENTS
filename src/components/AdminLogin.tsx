@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import api from '../api';
+import api, { setAuthToken } from '../api';
 
 interface AdminLoginProps {
   onLogin: () => void;
@@ -19,7 +19,12 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     setIsLoading(true);
 
     try {
-      await api.auth.adminLogin(email, password);
+      const data = await api.auth.adminLogin(email, password);
+      // Save the token so all future API requests are authenticated
+      if (data?.token) {
+        setAuthToken(data.token);
+        console.log('✅ Admin token saved to localStorage');
+      }
       onLogin();
     } catch (err: any) {
       setError(err.message || 'Invalid email or password. Please try again.');

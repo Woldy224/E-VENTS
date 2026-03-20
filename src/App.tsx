@@ -61,7 +61,7 @@ function App() {
           }
         })
         .catch(() => {
-          sessionStorage.removeItem("auth_token");
+          localStorage.removeItem("auth_token");
           setCurrentView('login');
         })
         .finally(() => {
@@ -157,7 +157,7 @@ function App() {
       console.error('Logout error:', error);
     }
 
-    sessionStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_token");
 
     setIsAdmin(false);
     setIsAdminAuthenticated(false);
