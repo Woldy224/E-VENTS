@@ -98,6 +98,7 @@ export default {
       apiRequest(`events?action=delete&id=${id}`, { method: "DELETE" }),
     resetTickets: (eventId?: string) => 
       apiRequest(`events?action=reset-tickets${eventId ? `&id=${eventId}` : ''}`, { method: 'POST' }),
+    myEvents: () => apiRequest("events?action=my-events", { method: "GET" }),
   },
   proposals: {
     submit: (proposalData: any) =>
@@ -118,5 +119,7 @@ export default {
         body: JSON.stringify({ eventId, quantity, totalAmount }),
       }),
     myTickets: () => apiRequest("tickets?action=my-tickets", { method: "GET" }),
+    eventSales: (eventId: string) => 
+      apiRequest(`tickets?action=event-sales&id=${eventId}`, { method: "GET" }),
   },
 };

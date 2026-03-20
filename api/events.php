@@ -230,6 +230,38 @@ switch ($action) {
             echo json_encode(['error' => 'Failed to delete event']);
         }
         break;
+
+    case 'my-events':
+        $user = requireAuth($pdo);
+        
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM events WHERE user_id = ? ORDER BY date ASC");
+            $stmt->execute([$user['id']]);
+            $events = $stmt->fetchAll();
+            
+            $formatted = array_map(function($event) {
+                return [
+                    'id' => (string)$event['id'],
+                    'title' => $event['title'],
+                    'description' => $event['description'],
+                    'date' => $event['date'],
+                    'time' => $event['time'],
+                    'price' => (float)$event['price'],
+                    'totalTickets' => (int)$event['total_tickets'],
+                    'soldTickets' => (int)$event['sold_tickets'],
+                    'imageUrl' => $event['image_url'],
+                    'location' => $event['location'],
+                    'createdAt' => $event['created_at'],
+                    'updatedAt' => $event['updated_at']
+                ];
+            }, $events);
+            
+            echo json_encode($formatted);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to fetch your events']);
+        }
+        break;
         
     default:
         http_response_code(404);

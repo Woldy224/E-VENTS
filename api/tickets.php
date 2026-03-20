@@ -130,12 +130,25 @@ switch ($action) {
         break;
         
     case 'event-sales':
-        requireAdmin($pdo);
+        $user = requireAuth($pdo);
         
         if (!$id) {
             http_response_code(400);
             echo json_encode(['error' => 'Event ID required']);
             exit();
+        }
+
+        // Check permission: Admin OR Event Owner
+        if (strtolower($user['role'] ?? '') !== 'admin') {
+            $stmt = $pdo->prepare("SELECT user_id FROM events WHERE id = ?");
+            $stmt->execute([$id]);
+            $ownerId = $stmt->fetchColumn();
+            
+            if (!$ownerId || (int)$ownerId !== (int)$user['id']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Forbidden: You are not the owner of this event']);
+                exit();
+            }
         }
         
         try {

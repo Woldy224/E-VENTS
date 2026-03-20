@@ -57,6 +57,9 @@ switch ($action) {
             exit();
         }
 
+        $user = getSessionUser($pdo);
+        $userId = $user ? $user['id'] : null;
+
         $data = json_decode(file_get_contents('php://input'), true);
 
         if (!isset($data['eventName'], $data['date'], $data['time'], $data['contactName'], $data['contactEmail'])) {
@@ -71,8 +74,8 @@ switch ($action) {
         try {
             if ($hasMediaCol) {
                 $stmt = $pdo->prepare("
-                    INSERT INTO event_proposals (event_name, description, date, time, number_of_tickets, price, image_url, contact_name, contact_email, contact_phone, media_coverage_requested)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO event_proposals (event_name, description, date, time, number_of_tickets, price, image_url, contact_name, contact_email, contact_phone, media_coverage_requested, user_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     RETURNING *
                 ");
                 $stmt->execute([
@@ -86,7 +89,8 @@ switch ($action) {
                     $data['contactName'],
                     $data['contactEmail'],
                     $data['contactPhone'] ?? null,
-                    $mediaRequested
+                    $mediaRequested,
+                    $userId
                 ]);
             } else {
                 // Backward-compatible insert if DB column does not exist yet
@@ -166,8 +170,8 @@ case 'approve':
             }
             
             $stmt = $pdo->prepare("
-                INSERT INTO events (title, description, date, time, price, total_tickets, image_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO events (title, description, date, time, price, total_tickets, image_url, user_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 RETURNING *
             ");
             $stmt->execute([
@@ -177,7 +181,8 @@ case 'approve':
                 $proposal['time'],
                 $proposal['price'],
                 $proposal['number_of_tickets'],
-                $proposal['image_url']
+                $proposal['image_url'],
+                $proposal['user_id'] ?? null
             ]);
             $event = $stmt->fetch();
             
@@ -231,6 +236,35 @@ case 'approve':
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to reject proposal']);
+        }
+        break;
+
+    case 'my-proposals':
+        $user = requireAuth($pdo);
+        
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM event_proposals WHERE user_id = ? ORDER BY submitted_at DESC");
+            $stmt->execute([$user['id']]);
+            $proposals = $stmt->fetchAll();
+            
+            $formatted = array_map(function($p) {
+                return [
+                    'id' => (string)$p['id'],
+                    'eventName' => $p['event_name'],
+                    'description' => $p['description'],
+                    'date' => $p['date'],
+                    'time' => $p['time'],
+                    'numberOfTickets' => (int)$p['number_of_tickets'],
+                    'price' => (float)$p['price'],
+                    'status' => $p['status'],
+                    'submittedAt' => $p['submitted_at']
+                ];
+            }, $proposals);
+            
+            echo json_encode($formatted);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to fetch your proposals']);
         }
         break;
         

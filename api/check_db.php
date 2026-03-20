@@ -24,10 +24,15 @@ try {
     // 3. Tables Check
     $tables = ['users', 'events', 'sessions', 'event_proposals', 'ticket_purchases'];
     $stats['tables'] = [];
+    $stats['schemas'] = [];
     
     foreach ($tables as $table) {
         $stmt = $pdo->query("SELECT COUNT(*) FROM $table");
         $stats['tables'][$table] = $stmt->fetchColumn();
+        
+        // Get columns
+        $stmt = $pdo->query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '$table' ORDER BY ordinal_position");
+        $stats['schemas'][$table] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // 4. User Details
