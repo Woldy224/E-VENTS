@@ -74,6 +74,7 @@ $routes = [
     '/force_admin' => 'force_admin.php',
     '/sync_data' => 'sync_data.php',
     '/debug_events' => 'debug_events.php',
+    '/debug_env' => 'debug_env.php',
 ];
 
 foreach ($routes as $route => $file) {

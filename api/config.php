@@ -13,7 +13,17 @@ if (!headers_sent()) {
 // ----------------------------------------------------------
 // Function to get env var from all possible sources
 function get_db_env($name, $default = null) {
-    return getenv($name) ?: ($_ENV[$name] ?? ($_SERVER[$name] ?? $default));
+    // 1. Try actual system environment variables first (most reliable on Railway)
+    $val = getenv($name);
+    if ($val !== false) return $val;
+
+    // 2. Try $_ENV (populated by Dotenv\Dotenv)
+    if (isset($_ENV[$name]) && $_ENV[$name] !== '') return $_ENV[$name];
+
+    // 3. Try $_SERVER
+    if (isset($_SERVER[$name]) && $_SERVER[$name] !== '') return $_SERVER[$name];
+
+    return $default;
 }
 
 $databaseUrl = get_db_env('DATABASE_URL');
@@ -21,7 +31,9 @@ $databaseUrl = get_db_env('DATABASE_URL');
 if ($databaseUrl) {
     // Parsing DATABASE_URL (format: postgresql://user:pass@host:port/dbname)
     $dbParts = parse_url($databaseUrl);
+    
     if ($dbParts === false) {
+        // Fallback if URL exists but is unparsable
         $dbHost = get_db_env('PGHOST', 'postgres.railway.internal');
         $dbPort = get_db_env('PGPORT', '5432');
         $dbName = get_db_env('PGDATABASE', 'railway');
@@ -30,17 +42,27 @@ if ($databaseUrl) {
     } else {
         $dbHost = $dbParts['host'] ?? 'localhost';
         $dbPort = $dbParts['port'] ?? '5432';
-        $dbName = ltrim($dbParts['path'] ?? '', '/');
+        $dbName = isset($dbParts['path']) ? ltrim($dbParts['path'], '/') : 'railway';
         $dbUser = isset($dbParts['user']) ? urldecode($dbParts['user']) : 'postgres';
         $dbPass = isset($dbParts['pass']) ? urldecode($dbParts['pass']) : '';
     }
 } else {
     // Fallback to individual variables
-    $dbHost = get_db_env('PGHOST', (get_db_env('DB_HOST', 'postgres.railway.internal')));
-    $dbPort = get_db_env('PGPORT', (get_db_env('DB_PORT', '5432')));
-    $dbName = get_db_env('PGDATABASE', (get_db_env('DB_NAME', 'railway')));
-    $dbUser = get_db_env('PGUSER', (get_db_env('DB_USER', 'postgres')));
-    $dbPass = get_db_env('PGPASSWORD', (get_db_env('DB_PASS', '')));
+    // Priority: PGHOST > DB_HOST > default
+    $dbHost = get_db_env('PGHOST', get_db_env('DB_HOST', 'postgres.railway.internal'));
+    $dbPort = get_db_env('PGPORT', get_db_env('DB_PORT', '5432'));
+    $dbName = get_db_env('PGDATABASE', get_db_env('DB_NAME', 'railway'));
+    $dbUser = get_db_env('PGUSER', get_db_env('DB_USER', 'postgres'));
+    $dbPass = get_db_env('PGPASSWORD', get_db_env('DB_PASS', ''));
+    
+    // Safety check: If we are not on localhost but the host IS localhost, something is wrong
+    $currentHost = $_SERVER['HTTP_HOST'] ?? '';
+    $isLocal = str_contains($currentHost, 'localhost') || str_contains($currentHost, '127.0.0.1');
+    
+    if (!$isLocal && ($dbHost === 'localhost' || $dbHost === '127.0.0.1')) {
+        // We are on production but DB host is localhost. Use Railway's internal DNS as a better guess.
+        $dbHost = 'postgres.railway.internal';
+    }
 }
 
 try {
@@ -80,7 +102,9 @@ try {
             'port' => $dbPort,
             'db' => $dbName,
             'user' => $dbUser,
-            'dsn_check' => "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName}"
+            'dsn_check' => "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName}",
+            'detected_env' => (isset($_SERVER['HTTP_HOST']) && !str_contains($_SERVER['HTTP_HOST'], 'localhost')) ? 'production' : 'local',
+            'has_db_url' => !empty($databaseUrl) ? 'YES' : 'NO'
         ]
     ];
     echo json_encode($errorInfo);
