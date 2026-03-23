@@ -55,6 +55,9 @@ if (strpos($path, '/api') === 0) {
 // Ensure it starts with / and has no trailing slash (except for root)
 $path = '/' . trim($path, '/');
 
+// Strip .php extension if present in the path for cleaner routing
+$path = preg_replace('/\.php$/', '', $path);
+
 /*
 |--------------------------------------------------------------------------
 | Routes
