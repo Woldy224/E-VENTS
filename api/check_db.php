@@ -12,14 +12,16 @@ try {
         'type' => 'PostgreSQL (Railway)'
     ];
 
-    // 2. Request Headers Debug
+    // 2. Environment Debug (Safe)
+    $env_debug = [];
+    $vars_to_check = ['DATABASE_URL', 'PGHOST', 'PGPORT', 'PGDATABASE', 'PGUSER', 'PGPASSWORD', 'DB_HOST', 'DB_NAME'];
+    foreach ($vars_to_check as $var) {
+        $val = getenv($var) ?: ($_ENV[$var] ?? ($_SERVER[$var] ?? 'NOT_SET'));
+        $env_debug[$var] = ($val === 'NOT_SET') ? 'MISSING' : (($var === 'PGPASSWORD' || $var === 'DATABASE_URL') ? 'SET (hidden)' : $val);
+    }
+    $stats['env_vars'] = $env_debug;
+
     $headers = function_exists('getallheaders') ? getallheaders() : [];
-    $stats['debug_headers'] = [
-        'Authorization_Detected' => isset($headers['Authorization']) || isset($headers['authorization']) || isset($_SERVER['HTTP_AUTHORIZATION']),
-        'Authorization_Value_Prefix' => isset($headers['Authorization']) ? substr($headers['Authorization'], 0, 10) . '...' : (isset($_SERVER['HTTP_AUTHORIZATION']) ? substr($_SERVER['HTTP_AUTHORIZATION'], 0, 10) . '...' : 'NONE'),
-        'All_Header_Keys' => array_keys($headers),
-        'HTTP_ORIGIN' => $_SERVER['HTTP_ORIGIN'] ?? 'NOT_SET'
-    ];
 
     // 3. Tables Check
     $tables = ['users', 'events', 'sessions', 'event_proposals', 'ticket_purchases'];
