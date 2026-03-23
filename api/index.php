@@ -68,6 +68,7 @@ $routes = [
     '/check_db' => 'check_db.php',
     '/force_admin' => 'force_admin.php',
     '/sync_data' => 'sync_data.php',
+    '/debug_events' => 'debug_events.php',
 ];
 
 foreach ($routes as $route => $file) {
