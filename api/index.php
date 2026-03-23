@@ -67,6 +67,7 @@ $routes = [
     '/migrate' => 'migrate.php',
     '/check_db' => 'check_db.php',
     '/force_admin' => 'force_admin.php',
+    '/sync_data' => 'sync_data.php',
 ];
 
 foreach ($routes as $route => $file) {
