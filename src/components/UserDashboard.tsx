@@ -98,24 +98,13 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
         const response = await api.events.myEvents();
         const myOwnEvents = response.events || [];
 
-        const eventsWithStats = await Promise.all(
-          myOwnEvents.map(async (event: any) => {
-            try {
-              const statsResponse = await api.tickets.eventSales(event.id);
-              return {
-                id: event.id,
-                title: event.title,
-                totalTickets: event.totalTickets,
-                soldTickets: statsResponse.totalSold || event.soldTickets || 0,
-                revenue: statsResponse.reduce ? statsResponse.reduce((sum: number, t: any) => sum + t.totalAmount, 0) : 0
-              };
-            } catch (error) {
-              console.error(`Failed to fetch stats for event ${event.id}`, error);
-              return null;
-            }
-          })
-        );
-        const validEvents = eventsWithStats.filter((e) => e !== null) as EventStats[];
+        const validEvents = myOwnEvents.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          totalTickets: event.totalTickets || 0,
+          soldTickets: event.soldTickets || 0,
+          revenue: 0 // Temp bypass of eventSales
+        }));
         setMyEvents(validEvents);
       }
     } catch (err: any) {
