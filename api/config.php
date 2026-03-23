@@ -11,13 +11,21 @@ if (!headers_sent()) {
 // ----------------------------------------------------------
 // Database - Railway credentials
 // ----------------------------------------------------------
-$databaseUrl = getenv('DATABASE_URL') ?: ($_ENV['DATABASE_URL'] ?? null);
+// On Railway, PGPASSWORD, PGHOST etc are automatically injected.
+// We prioritize DATABASE_URL if available as it is the most robust.
+
+$databaseUrl = getenv('DATABASE_URL');
 
 if ($databaseUrl) {
     // Parsing DATABASE_URL (format: postgresql://user:pass@host:port/dbname)
     $dbParts = parse_url($databaseUrl);
     if ($dbParts === false) {
-        $dbHost = 'localhost'; $dbPort = '5432'; $dbName = 'railway'; $dbUser = 'postgres'; $dbPass = '';
+        // Fallback to individual variables if parsing fails
+        $dbHost = getenv('PGHOST') ?: 'postgres.railway.internal';
+        $dbPort = getenv('PGPORT') ?: '5432';
+        $dbName = getenv('PGDATABASE') ?: 'railway';
+        $dbUser = getenv('PGUSER') ?: 'postgres';
+        $dbPass = getenv('PGPASSWORD') ?: '';
     } else {
         $dbHost = $dbParts['host'] ?? 'localhost';
         $dbPort = $dbParts['port'] ?? '5432';
@@ -26,12 +34,13 @@ if ($databaseUrl) {
         $dbPass = isset($dbParts['pass']) ? urldecode($dbParts['pass']) : '';
     }
 } else {
-    // Fallback to individual variables
-    $dbHost = getenv('PGHOST') ?: ($_ENV['PGHOST'] ?? ($_ENV['DB_HOST'] ?? 'postgres.railway.internal'));
-    $dbPort = getenv('PGPORT') ?: ($_ENV['PGPORT'] ?? ($_ENV['DB_PORT'] ?? '5432'));
-    $dbName = getenv('PGDATABASE') ?: ($_ENV['PGDATABASE'] ?? ($_ENV['DB_NAME'] ?? 'railway'));
-    $dbUser = getenv('PGUSER') ?: ($_ENV['PGUSER'] ?? ($_ENV['DB_USER'] ?? 'postgres'));
-    $dbPass = getenv('PGPASSWORD') ?: ($_ENV['PGPASSWORD'] ?? ($_ENV['DB_PASS'] ?? 'SRsOxQaLnprubWCywbQTyAWaNyqsoFPX'));
+    // Fallback to individual individual variables (PG* are Railway standard)
+    // We check getenv() directly to avoid being overridden by local .env (which uses DB_HOST etc)
+    $dbHost = getenv('PGHOST') ?: (getenv('DB_HOST') ?: 'postgres.railway.internal');
+    $dbPort = getenv('PGPORT') ?: (getenv('DB_PORT') ?: '5432');
+    $dbName = getenv('PGDATABASE') ?: (getenv('DB_NAME') ?: 'railway');
+    $dbUser = getenv('PGUSER') ?: (getenv('DB_USER') ?: 'postgres');
+    $dbPass = getenv('PGPASSWORD') ?: (getenv('DB_PASS') ?: '');
 }
 
 try {
