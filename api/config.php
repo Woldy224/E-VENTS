@@ -51,9 +51,15 @@ try {
         "dbname={$dbName}"
     ];
     
-    // Auto-enable SSL for remote connections
-    if (!str_contains($dbHost, 'localhost') && !str_contains($dbHost, '127.0.0.1')) {
+    // Auto-enable SSL for remote/public connections, 
+    // but disable it for internal Railway networking which often doesn't support it.
+    if (!str_contains($dbHost, 'localhost') && 
+        !str_contains($dbHost, '127.0.0.1') && 
+        !str_contains($dbHost, '.internal') &&
+        !str_contains($dbHost, '.local')) {
         $dsnParts[] = "sslmode=require";
+    } else {
+        $dsnParts[] = "sslmode=disable";
     }
     
     $dsn = "pgsql:" . implode(';', $dsnParts);
@@ -65,6 +71,7 @@ try {
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
+    // On production, we'll still show the error for debugging purposes until it's fixed
     $errorInfo = [
         'error' => 'Database connection error',
         'details' => $e->getMessage(),
@@ -73,8 +80,7 @@ try {
             'port' => $dbPort,
             'db' => $dbName,
             'user' => $dbUser,
-            'url_detected' => !empty($databaseUrl),
-            'dsn' => "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName};sslmode=..."
+            'dsn_check' => "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName}"
         ]
     ];
     echo json_encode($errorInfo);
