@@ -84,6 +84,7 @@ export default {
   },
   events: {
     list: () => apiRequest("events?action=list", { method: "GET" }),
+    get: (id: string) => apiRequest(`events?action=get&id=${id}`, { method: "GET" }),
     create: (eventData: any) =>
       apiRequest("events?action=create", {
         method: "POST",

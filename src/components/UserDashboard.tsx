@@ -96,7 +96,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
         setMyTickets(allTickets);
       } else if (activeTab === 'events') {
         const response = await api.events.myEvents();
-        const myOwnEvents = response.events || [];
+        const myOwnEvents = Array.isArray(response) ? response : (response.events || []);
 
         const validEvents = myOwnEvents.map((event: any) => ({
           id: event.id,
