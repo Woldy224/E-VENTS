@@ -1,15 +1,41 @@
 <?php
 header('Content-Type: application/json');
 
-$env = [];
-$interesting = ['DATABASE_URL', 'PGHOST', 'PGPORT', 'PGDATABASE', 'PGUSER', 'PGPASSWORD', 'DB_HOST', 'DB_NAME', 'RAILWAY_STATIC_URL', 'RAILWAY_ENVIRONMENT'];
+// Get all possible environment variables
+$all_envs = [];
 
-foreach ($interesting as $var) {
-    $val = getenv($var);
-    $env['getenv'][$var] = ($val === false) ? 'FALSE' : (($var === 'PGPASSWORD' || $var === 'DATABASE_URL') ? 'SET (hidden)' : $val);
-    
-    $val = $_ENV[$var] ?? 'NULL';
-    $env['_ENV'][$var] = ($val === 'NULL') ? 'NULL' : (($var === 'PGPASSWORD' || $var === 'DATABASE_URL') ? 'SET (hidden)' : $val);
+// 1. From getenv()
+foreach (getenv() as $key => $value) {
+    if (str_contains($key, 'PASS') || str_contains($key, 'TOKEN') || str_contains($key, 'SECRET') || str_contains($key, 'URL')) {
+        $all_envs['getenv'][$key] = 'SET (hidden)';
+    } else {
+        $all_envs['getenv'][$key] = $value;
+    }
 }
 
-echo json_encode($env, JSON_PRETTY_PRINT);
+// 2. From $_ENV
+foreach ($_ENV as $key => $value) {
+    if (str_contains($key, 'PASS') || str_contains($key, 'TOKEN') || str_contains($key, 'SECRET') || str_contains($key, 'URL')) {
+        $all_envs['_ENV'][$key] = 'SET (hidden)';
+    } else {
+        $all_envs['_ENV'][$key] = $value;
+    }
+}
+
+// 3. From $_SERVER
+foreach ($_SERVER as $key => $value) {
+    if (str_contains($key, 'PASS') || str_contains($key, 'TOKEN') || str_contains($key, 'SECRET') || str_contains($key, 'URL')) {
+        $all_envs['_SERVER'][$key] = 'SET (hidden)';
+    } else {
+        // Skip some bulky/irrelevant server vars
+        if (!in_array($key, ['PATH', 'HTTP_COOKIE', 'LS_COLORS'])) {
+            $all_envs['_SERVER'][$key] = is_array($value) ? 'ARRAY' : $value;
+        }
+    }
+}
+
+echo json_encode([
+    'message' => 'Railway Environment Debug',
+    'timestamp' => date('Y-m-d H:i:s'),
+    'variables' => $all_envs
+], JSON_PRETTY_PRINT);
