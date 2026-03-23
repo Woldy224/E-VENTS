@@ -262,6 +262,39 @@ switch ($action) {
             echo json_encode(['error' => 'Failed to fetch your events']);
         }
         break;
+
+    case 'fix-data':
+        try {
+            $pdo->beginTransaction();
+            
+            // Activate all events
+            $pdo->exec("UPDATE events SET status = 'active' WHERE status IS NULL OR status = ''");
+            
+            // Link ownership by matching titles with proposals
+            $stmt = $pdo->query("SELECT id, title FROM events WHERE user_id IS NULL");
+            $events = $stmt->fetchAll();
+            $fixedCount = 0;
+            
+            foreach ($events as $event) {
+                $stmtProp = $pdo->prepare("SELECT user_id FROM event_proposals WHERE event_name = ? AND user_id IS NOT NULL LIMIT 1");
+                $stmtProp->execute([$event['title']]);
+                $userId = $stmtProp->fetchColumn();
+                
+                if ($userId) {
+                    $upd = $pdo->prepare("UPDATE events SET user_id = ? WHERE id = ?");
+                    $upd->execute([$userId, $event['id']]);
+                    $fixedCount++;
+                }
+            }
+            
+            $pdo->commit();
+            echo json_encode(['success' => true, 'activated' => 'all', 'linked' => $fixedCount]);
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
         
     default:
         http_response_code(404);

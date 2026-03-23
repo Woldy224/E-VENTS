@@ -113,10 +113,10 @@ export default {
       apiRequest(`proposals?action=reject&id=${id}`, { method: "POST" }),
   },
   tickets: {
-    purchase: (eventId: string, quantity: number, totalAmount: number) =>
+    purchase: (purchaseData: any) =>
       apiRequest("tickets?action=purchase", {
         method: "POST",
-        body: JSON.stringify({ eventId, quantity, totalAmount }),
+        body: JSON.stringify(purchaseData),
       }),
     myTickets: () => apiRequest("tickets?action=my-tickets", { method: "GET" }),
     eventSales: (eventId: string) => 
