@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
-import { X, ShoppingCart, User, Mail, Phone, Minus, Plus } from 'lucide-react';
+import { X, ShoppingCart, User, Mail, Phone, CheckCircle, Minus, Plus } from 'lucide-react';
 import { Event } from '../types/Event';
 
 interface TicketPurchaseModalProps {
   event: Event;
   onClose: () => void;
-  onPurchase: (purchase: { buyerName: string; buyerEmail: string; buyerPhone?: string; quantity: number }) => void;
+  onPurchase: (purchase: { 
+    buyerName: string; 
+    buyerEmail: string; 
+    buyerPhone?: string; 
+    quantity: number;
+    paymentMethod: string;
+    paymentProof?: string;
+  }) => void;
 }
 
 export default function TicketPurchaseModal({ event, onClose, onPurchase }: TicketPurchaseModalProps) {
@@ -16,6 +23,8 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
     phone: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'moncash' | 'natcash'>('card');
+  const [paymentProof, setPaymentProof] = useState<string | null>(null);
 
   const availableTickets = event.totalTickets - event.soldTickets;
   const totalAmount = quantity * event.price;
@@ -23,17 +32,35 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (buyerInfo.name && buyerInfo.email) {
+      if ((paymentMethod === 'moncash' || paymentMethod === 'natcash') && !paymentProof) {
+        alert("Veuillez soumettre une capture d'écran du paiement pour confirmer votre achat.");
+        return;
+      }
+
       setIsSubmitting(true);
       try {
         await onPurchase({
           quantity,
           buyerName: buyerInfo.name,
           buyerEmail: buyerInfo.email,
-          buyerPhone: buyerInfo.phone || undefined
+          buyerPhone: buyerInfo.phone || undefined,
+          paymentMethod,
+          paymentProof: paymentProof || undefined
         });
       } finally {
         setIsSubmitting(false);
       }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPaymentProof(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -151,12 +178,83 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
             </div>
           </div>
 
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h4 className="font-medium text-yellow-800 mb-2">Espace réservé pour l'intégration du paiement</h4>
-            <p className="text-sm text-yellow-700">
-              Le traitement des paiements sera intégré ici. Cela inclura le traitement sécurisé des cartes bancaires, la confirmation du paiement et la génération automatique de billets avec des codes QR.
-            </p>
+          <div className="mb-6">
+            <h4 className="font-medium text-gray-900 mb-3">Méthode de Paiement</h4>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('card')}
+                className={`p-3 border rounded-lg text-sm font-medium flex flex-col items-center gap-2 transition-all ${paymentMethod === 'card' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'}`}
+              >
+                💳 Card
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('moncash')}
+                className={`p-3 border rounded-lg text-sm font-medium flex flex-col items-center gap-2 transition-all ${paymentMethod === 'moncash' ? 'border-red-600 bg-red-50 text-red-700' : 'border-gray-200 hover:bg-gray-50'}`}
+              >
+                🔴 MonCash
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('natcash')}
+                className={`p-3 border rounded-lg text-sm font-medium flex flex-col items-center gap-2 transition-all ${paymentMethod === 'natcash' ? 'border-orange-600 bg-orange-50 text-orange-700' : 'border-gray-200 hover:bg-gray-50'}`}
+              >
+                🟠 NatCash
+              </button>
+            </div>
           </div>
+
+          {paymentMethod === 'card' ? (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h4 className="font-medium text-blue-800 mb-2">Paiement Sécurisé</h4>
+              <p className="text-sm text-blue-700">
+                Paiement via carte bancaire sécurisé. Confirmation immédiate.
+              </p>
+            </div>
+          ) : (
+            <div className="mb-6 space-y-4">
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                <p className="text-sm font-medium text-gray-800 mb-4">
+                  Scannez ou cliquez sur le QR Code {paymentMethod === 'moncash' ? 'MonCash' : 'NatCash'} ci-dessous
+                </p>
+                
+                <a 
+                  href={paymentMethod === 'moncash' ? "moncash://" : "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block p-4 bg-white border rounded-xl hover:shadow-lg transition-shadow"
+                >
+                  <img 
+                    src={paymentMethod === 'moncash' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_L6V1_D3-UvV6JmO7z8oY6z9-g-X-I-vG9w&s" : "https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"} 
+                    alt="Payment QR" 
+                    className="w-48 h-48"
+                  />
+                </a>
+                
+                <p className="text-xs text-gray-500 mt-4">
+                  {paymentMethod === 'moncash' ? 'Une fois le paiement effectué, veuillez soumettre une capture d\'écran.' : 'Préparez votre capture d\'écran après le transfert.'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Preuve de paiement (Capture d'écran) *
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {paymentProof && (
+                  <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Image chargée avec succès
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-between items-center mb-6 p-4 bg-gray-50 rounded-lg">
             <span className="font-medium text-gray-900">Total Amount:</span>
@@ -169,7 +267,7 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
             className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400"
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
-            {isSubmitting ? 'Traitement...' : 'Acheter'}
+            {isSubmitting ? 'Traitement...' : (paymentMethod === 'card' ? 'Acheter' : 'Envoyer')}
           </button>
         </form>
       </div>

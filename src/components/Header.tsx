@@ -31,6 +31,7 @@ export default function Header({
     ...(isAdmin ? [
       { id: 'admin-events', label: 'Gérer les Événements', icon: Calendar },
       { id: 'admin-proposals', label: 'Propositions', icon: User },
+      { id: 'admin-payments', label: 'Paiements', icon: LayoutDashboard }
     ] : [])
   ];
 

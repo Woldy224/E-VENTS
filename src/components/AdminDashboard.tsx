@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Download, TrendingUp, Users, Calendar } from 'lucide-react';
+import { Plus, Search, Filter, Download, TrendingUp, Users, Calendar, X } from 'lucide-react';
+import api from '../api';
 import { Event, EventProposal } from '../types/Event';
 import EventCard from './EventCard';
 import EventForm from './EventForm';
@@ -44,6 +45,39 @@ export default function AdminDashboard({
     event.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(false);
+  const [selectedProof, setSelectedProof] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentView === 'admin-payments') {
+      loadPendingPayments();
+    }
+  }, [currentView]);
+
+  const loadPendingPayments = async () => {
+    setIsLoadingPayments(true);
+    try {
+      const data = await api.tickets.listPending();
+      setPendingPayments(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load pending payments:', error);
+    } finally {
+      setIsLoadingPayments(false);
+    }
+  };
+
+  const handleVerifyPayment = async (id: string, decision: 'approve' | 'reject') => {
+    try {
+      await api.tickets.verifyPayment(id, decision);
+      setPendingPayments(prev => prev.filter(p => p.id !== id));
+      alert(`Paiement ${decision === 'approve' ? 'approuvé' : 'rejeté'} avec succès.`);
+    } catch (error) {
+      console.error('Failed to verify payment:', error);
+      alert('Erreur lors de la vérification du paiement.');
+    }
+  };
+
   const filteredProposals = safeProposals.filter(proposal =>
     proposal.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     proposal.contactName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -68,6 +102,138 @@ export default function AdminDashboard({
     setShowEventForm(false);
     setEditingEvent(undefined);
   };
+
+  if (currentView === 'admin-payments') {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 font-heading">Validations de Paiements</h1>
+            <p className="text-gray-600 mt-1">
+              {pendingPayments.length} paiement{pendingPayments.length !== 1 ? 's' : ''} en attente de vérification
+            </p>
+          </div>
+          <button 
+            onClick={loadPendingPayments}
+            className="mt-4 sm:mt-0 p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            Actualiser
+          </button>
+        </div>
+
+        {isLoadingPayments ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : pendingPayments.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun paiement en attente</h3>
+            <p className="text-gray-500">Tous les paiements manuels ont été traités.</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acheteur</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Événement / Quantité</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Méthode</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preuve</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {pendingPayments.map((payment) => (
+                  <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{payment.buyer_name}</div>
+                      <div className="text-xs text-gray-500">{payment.buyer_email}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 font-medium">{payment.event_title}</div>
+                      <div className="text-xs text-blue-600 bg-blue-50 inline-block px-2 py-0.5 rounded-full mt-1">
+                        {payment.quantity} ticket{payment.quantity > 1 ? 's' : ''}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-bold rounded-full uppercase ${
+                        payment.payment_method === 'moncash' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                      }`}>
+                        {payment.payment_method}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      ${parseFloat(payment.total_amount).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {payment.payment_proof ? (
+                        <button 
+                          onClick={() => setSelectedProof(payment.payment_proof)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium underline flex items-center gap-1"
+                        >
+                          Voir la capture
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">Aucune preuve</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      <button
+                        onClick={() => handleVerifyPayment(payment.id, 'approve')}
+                        className="inline-flex items-center px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      >
+                        Approuver
+                      </button>
+                      <button
+                        onClick={() => handleVerifyPayment(payment.id, 'reject')}
+                        className="inline-flex items-center px-3 py-1 bg-red-50 text-red-600 border border-red-100 rounded-md hover:bg-red-600 hover:text-white transition-colors"
+                      >
+                        Rejeter
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Modal pour voir la preuve de paiement */}
+        {selectedProof && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-[100] animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+              <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-900">Capture d'écran du paiement</h3>
+                <button 
+                  onClick={() => setSelectedProof(null)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="h-6 w-6 text-gray-500" />
+                </button>
+              </div>
+              <div className="p-6 overflow-auto bg-gray-900 flex justify-center">
+                <img 
+                  src={selectedProof} 
+                  alt="Proof of payment" 
+                  className="max-w-full rounded-lg shadow-inner"
+                />
+              </div>
+              <div className="p-4 bg-gray-50 flex justify-end">
+                <button 
+                  onClick={() => setSelectedProof(null)}
+                  className="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (currentView === 'admin-events') {
     return (

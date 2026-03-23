@@ -27,11 +27,11 @@ if ($databaseUrl) {
     }
 } else {
     // Fallback to individual variables
-    $dbHost = getenv('PGHOST') ?: ($_ENV['PGHOST'] ?? 'postgres.railway.internal');
-    $dbPort = getenv('PGPORT') ?: ($_ENV['PGPORT'] ?? '5432');
-    $dbName = getenv('PGDATABASE') ?: ($_ENV['PGDATABASE'] ?? 'railway');
-    $dbUser = getenv('PGUSER') ?: ($_ENV['PGUSER'] ?? 'postgres');
-    $dbPass = getenv('PGPASSWORD') ?: ($_ENV['PGPASSWORD'] ?? 'SRsOxQaLnprubWCywbQTyAWaNyqsoFPX');
+    $dbHost = getenv('PGHOST') ?: ($_ENV['PGHOST'] ?? ($_ENV['DB_HOST'] ?? 'postgres.railway.internal'));
+    $dbPort = getenv('PGPORT') ?: ($_ENV['PGPORT'] ?? ($_ENV['DB_PORT'] ?? '5432'));
+    $dbName = getenv('PGDATABASE') ?: ($_ENV['PGDATABASE'] ?? ($_ENV['DB_NAME'] ?? 'railway'));
+    $dbUser = getenv('PGUSER') ?: ($_ENV['PGUSER'] ?? ($_ENV['DB_USER'] ?? 'postgres'));
+    $dbPass = getenv('PGPASSWORD') ?: ($_ENV['PGPASSWORD'] ?? ($_ENV['DB_PASS'] ?? 'SRsOxQaLnprubWCywbQTyAWaNyqsoFPX'));
 }
 
 try {

@@ -15,7 +15,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   // Default to 'events' if a token exists, otherwise 'login'. This prevents the login screen flash on refresh.
-  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'dashboard'>(getAuthToken() ? 'events' : 'login');
+  const [currentView, setCurrentView] = useState<'events' | 'propose' | 'login' | 'admin-login' | 'admin-events' | 'admin-proposals' | 'admin-payments' | 'dashboard'>(getAuthToken() ? 'events' : 'login');
   const [isInitializing, setIsInitializing] = useState(true);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -147,6 +147,9 @@ function App() {
     setCurrentView(view as any);
     if (view === 'admin-proposals') {
       loadProposals();
+    }
+    if (view === 'admin-payments') {
+      // Logic for loading payments will be inside AdminDashboard
     }
   };
 

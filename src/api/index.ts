@@ -114,12 +114,18 @@ export default {
       apiRequest(`proposals?action=reject&id=${id}`, { method: "POST" }),
   },
   tickets: {
+    myTickets: () => apiRequest("tickets?action=my-tickets", { method: "GET" }),
+    listPending: () => apiRequest("tickets?action=list-pending", { method: "GET" }),
+    verifyPayment: (id: string, decision: 'approve' | 'reject') =>
+      apiRequest("tickets?action=verify-payment", {
+        method: "POST",
+        body: JSON.stringify({ id, decision }),
+      }),
     purchase: (purchaseData: any) =>
       apiRequest("tickets?action=purchase", {
         method: "POST",
         body: JSON.stringify(purchaseData),
       }),
-    myTickets: () => apiRequest("tickets?action=my-tickets", { method: "GET" }),
     eventSales: (eventId: string) => 
       apiRequest(`tickets?action=event-sales&id=${eventId}`, { method: "GET" }),
     scan: (ticketId: string) =>

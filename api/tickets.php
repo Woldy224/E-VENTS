@@ -49,9 +49,13 @@ switch ($action) {
             $user = getSessionUser($pdo);
             $userId = $user ? $user['id'] : null;
             
+            $paymentMethod = $data['paymentMethod'] ?? 'card';
+            $paymentProof = $data['paymentProof'] ?? null;
+            $status = ($paymentMethod === 'moncash' || $paymentMethod === 'natcash') ? 'pending_verification' : 'completed';
+
             $stmt = $pdo->prepare("
-                INSERT INTO ticket_purchases (event_id, user_id, quantity, total_amount, buyer_name, buyer_email, buyer_phone, qr_code)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO ticket_purchases (event_id, user_id, quantity, total_amount, buyer_name, buyer_email, buyer_phone, qr_code, payment_method, payment_proof, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 RETURNING *
             ");
             $stmt->execute([
@@ -62,12 +66,17 @@ switch ($action) {
                 $data['buyerName'],
                 $data['buyerEmail'],
                 $data['buyerPhone'] ?? null,
-                $qrCode
+                $qrCode,
+                $paymentMethod,
+                $paymentProof,
+                $status
             ]);
             $purchase = $stmt->fetch();
             
-            $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets + ? WHERE id = ?");
-            $stmt->execute([$data['quantity'], $data['eventId']]);
+            if ($status === 'completed') {
+                $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets + ? WHERE id = ?");
+                $stmt->execute([$data['quantity'], $data['eventId']]);
+            }
             
             $pdo->commit();
             
@@ -83,13 +92,14 @@ switch ($action) {
                     'buyerPhone' => $purchase['buyer_phone'],
                     'status' => $purchase['status'],
                     'qrCode' => $purchase['qr_code'],
-                    'purchasedAt' => $purchase['purchased_at']
+                    'purchasedAt' => $purchase['purchased_at'],
+                    'paymentMethod' => $purchase['payment_method']
                 ]
             ]);
         } catch (PDOException $e) {
             $pdo->rollBack();
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to purchase tickets']);
+            echo json_encode(['error' => 'Failed to purchase tickets: ' . $e->getMessage()]);
         }
         break;
         
@@ -98,7 +108,7 @@ switch ($action) {
         
         try {
             $stmt = $pdo->prepare("
-                SELECT tp.*, e.title as event_title, e.date as event_date, e.time as event_time
+                SELECT tp.*, e.title as event_title, e.date as event_date, e.time as event_time, e.location as event_location
                 FROM ticket_purchases tp
                 JOIN events e ON tp.event_id = e.id
                 WHERE tp.user_id = ?
@@ -114,11 +124,13 @@ switch ($action) {
                     'eventTitle' => $t['event_title'],
                     'eventDate' => $t['event_date'],
                     'eventTime' => $t['event_time'],
+                    'eventLocation' => $t['event_location'],
                     'quantity' => (int)$t['quantity'],
                     'totalAmount' => (float)$t['total_amount'],
                     'status' => $t['status'],
                     'qrCode' => $t['qr_code'],
-                    'purchasedAt' => $t['purchased_at']
+                    'purchasedAt' => $t['purchased_at'],
+                    'paymentMethod' => $t['payment_method']
                 ];
             }, $tickets);
             
@@ -129,6 +141,74 @@ switch ($action) {
         }
         break;
         
+    case 'list-pending':
+        requireAdmin($pdo);
+        
+        try {
+            $stmt = $pdo->prepare("
+                SELECT tp.*, e.title as event_title
+                FROM ticket_purchases tp
+                JOIN events e ON tp.event_id = e.id
+                WHERE tp.status = 'pending_verification'
+                ORDER BY tp.purchased_at DESC
+            ");
+            $stmt->execute();
+            $pending = $stmt->fetchAll();
+            
+            echo json_encode($pending);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to fetch pending payments']);
+        }
+        break;
+
+    case 'verify-payment':
+        requireAdmin($pdo);
+        $data = json_decode(file_get_contents('php://input'), true);
+        $purchaseId = $data['id'] ?? null;
+        $decision = $data['decision'] ?? null; // 'approve' or 'reject'
+        
+        if (!$purchaseId || !$decision) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing purchase ID or decision']);
+            exit();
+        }
+        
+        try {
+            $pdo->beginTransaction();
+            
+            $stmt = $pdo->prepare("SELECT * FROM ticket_purchases WHERE id = ? FOR UPDATE");
+            $stmt->execute([$purchaseId]);
+            $purchase = $stmt->fetch();
+            
+            if (!$purchase) {
+                $pdo->rollBack();
+                http_response_code(404);
+                echo json_encode(['error' => 'Purchase not found']);
+                exit();
+            }
+            
+            if ($decision === 'approve') {
+                $stmt = $pdo->prepare("UPDATE ticket_purchases SET status = 'completed' WHERE id = ?");
+                $stmt->execute([$purchaseId]);
+                
+                // Update sold tickets
+                $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets + ? WHERE id = ?");
+                $stmt->execute([$purchase['quantity'], $purchase['event_id']]);
+            } else {
+                $stmt = $pdo->prepare("UPDATE ticket_purchases SET status = 'rejected' WHERE id = ?");
+                $stmt->execute([$purchaseId]);
+            }
+            
+            $pdo->commit();
+            echo json_encode(['success' => true]);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to verify payment']);
+        }
+        break;
+
     case 'event-sales':
         $user = requireAuth($pdo);
         
