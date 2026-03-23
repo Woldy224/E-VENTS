@@ -95,8 +95,8 @@ switch ($action) {
             } else {
                 // Backward-compatible insert if DB column does not exist yet
                 $stmt = $pdo->prepare("
-                    INSERT INTO event_proposals (event_name, description, date, time, number_of_tickets, price, image_url, contact_name, contact_email, contact_phone)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO event_proposals (event_name, description, date, time, number_of_tickets, price, image_url, contact_name, contact_email, contact_phone, user_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     RETURNING *
                 ");
                 $stmt->execute([
@@ -109,7 +109,8 @@ switch ($action) {
                     $data['imageUrl'] ?? null,
                     $data['contactName'],
                     $data['contactEmail'],
-                    $data['contactPhone'] ?? null
+                    $data['contactPhone'] ?? null,
+                    $userId
                 ]);
             }
 
