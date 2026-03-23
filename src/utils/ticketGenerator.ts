@@ -206,10 +206,10 @@ export const generateTicketPDF = async (ticketData: TicketData, qrCodeDataURL: s
   pdf.save(fileName);
 };
 
-export const processTicketPurchase = async (ticketData: Omit<TicketData, 'ticketId' | 'purchaseDate'>): Promise<string> => {
+export const processTicketPurchase = async (ticketData: Omit<TicketData, 'ticketId' | 'purchaseDate'> & { ticketId?: string }): Promise<string> => {
   try {
-    // Generate unique ticket ID
-    const ticketId = generateTicketId();
+    // Generate unique ticket ID, or use provided database ticket ID
+    const ticketId = ticketData.ticketId || generateTicketId();
 
     // Create complete ticket data
     const completeTicketData: TicketData = {

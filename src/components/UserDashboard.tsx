@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Download, QrCode, Calendar as CalendarIcon, DollarSign, Users, CheckCircle, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Download, QrCode, Calendar as CalendarIcon, DollarSign, Users, CheckCircle, User, X } from 'lucide-react';
 import api from '../api';
 import { processTicketPurchase } from '../utils/ticketGenerator';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -41,7 +41,9 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
   const [error, setError] = useState<string | null>(null);
 
   // Scanner State
-  const [scanResult, setScanResult] = useState<string | null>(null);
+  const [scanResult, setScanResult] = useState<any>(null);
+  const [scanStatus, setScanStatus] = useState<'idle' | 'success' | 'invalid'>('idle');
+  const isProcessingRef = useRef(false);
 
   // Initial Load
   useEffect(() => {
@@ -121,6 +123,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
       const eventDetails = await api.events.get(ticket.eventId);
 
       const ticketData = {
+        ticketId: ticket.id,
         eventTitle: ticket.eventName || eventDetails.title || `Événement #${ticket.eventId}`,
         eventDate: eventDetails.date || ticket.purchasedAt.split(' ')[0],
         eventTime: eventDetails.time || "20:00",
@@ -147,6 +150,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
 
     if (activeTab === 'scanner') {
       setScanResult(null);
+      setScanStatus('idle');
+      isProcessingRef.current = false;
       html5QrCode = new Html5Qrcode("qr-reader");
 
       const startScanner = async () => {
@@ -154,8 +159,23 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
           await html5QrCode?.start(
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 250 } },
-            (decodedText) => {
-              setScanResult(decodedText);
+            async (decodedText) => {
+              if (isProcessingRef.current) return;
+              isProcessingRef.current = true;
+              try {
+                const parsedData = JSON.parse(decodedText);
+                if (!parsedData.ticketId) {
+                  throw new Error("Format QR invalide. Le billet doit contenir un Ticket ID.");
+                }
+                const response = await api.tickets.scan(parsedData.ticketId);
+                setScanResult({ ...parsedData, dbInfo: response.ticket });
+                setScanStatus('success');
+              } catch (err: any) {
+                setScanStatus('invalid');
+                let rawJson = decodedText;
+                try { rawJson = JSON.stringify(JSON.parse(decodedText), null, 2); } catch {}
+                setScanResult({ error: err.message || "Erreur lors de la validation.", raw: rawJson });
+              }
             },
             () => { /* silent parse errors */ }
           );
@@ -347,19 +367,70 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
 
               <div className="w-full md:w-1/2">
                 <div className="bg-gray-50 p-8 rounded-2xl border border-gray-200 h-full flex flex-col justify-center items-center text-center">
-                  {scanResult ? (
-                    <div className="animate-in zoom-in duration-300">
+                  {scanStatus === 'success' && scanResult ? (
+                    <div className="animate-in zoom-in duration-300 w-full max-w-sm">
                       <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">Billet Validé !</h3>
-                      <div className="bg-white p-4 rounded-xl border border-gray-200 text-left mt-6 w-full max-w-sm">
-                        <p className="text-sm text-gray-500 uppercase tracking-wider mb-1">Données du scan</p>
-                        <p className="font-mono text-sm break-all text-gray-800 bg-gray-100 p-2 rounded">{scanResult}</p>
+                      
+                      <div className="bg-white p-6 rounded-xl border border-gray-200 text-left mt-6 shadow-sm">
+                        <div className="border-b border-gray-100 pb-4 mb-4">
+                          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Participant</p>
+                          <p className="text-lg font-bold text-gray-900">{scanResult.buyerName}</p>
+                          <p className="text-sm text-gray-500">{scanResult.buyerEmail}</p>
+                        </div>
+                        
+                        <div className="space-y-4 text-sm">
+                          <div>
+                            <p className="text-xs text-gray-400 font-semibold uppercase">Événement</p>
+                            <p className="font-semibold text-gray-800">{scanResult.eventTitle}</p>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div>
+                               <p className="text-xs text-gray-400 font-semibold uppercase">Quantité</p>
+                               <p className="font-semibold text-blue-600">{scanResult.quantity} entrée(s)</p>
+                            </div>
+                            <div className="text-right">
+                               <p className="text-xs text-gray-400 font-semibold uppercase">ID Billet</p>
+                               <p className="font-mono text-xs text-gray-500 mt-1">{scanResult.ticketId.substring(0, 8)}...</p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
+
                       <button
-                        onClick={() => setScanResult(null)}
-                        className="mt-8 bg-white border-2 border-gray-200 px-6 py-2 rounded-xl font-semibold hover:bg-gray-50 transition"
+                        onClick={() => { setScanStatus('idle'); setScanResult(null); isProcessingRef.current = false; }}
+                        className="mt-8 bg-blue-50 border border-blue-100 text-blue-700 hover:bg-blue-100 px-6 py-3 rounded-xl font-bold transition w-full shadow-sm"
                       >
-                        Scanner le suivant
+                        Scanner le billet suivant
+                      </button>
+                    </div>
+                  ) : scanStatus === 'invalid' ? (
+                    <div className="animate-in zoom-in duration-300 w-full max-w-sm">
+                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <X className="w-8 h-8 text-red-600" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Billet Invalide</h3>
+                      
+                      <div className="bg-red-50 p-4 rounded-xl border border-red-100 mb-6 text-left">
+                        <p className="text-red-700 font-medium text-sm text-center">
+                          {scanResult?.error || "Une erreur inconnue s'est produite lors de la vérification."}
+                        </p>
+                      </div>
+                      
+                      {scanResult?.raw && (
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 text-left w-full shadow-sm">
+                          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Données brutes lues :</p>
+                          <pre className="font-mono text-[10px] text-gray-600 bg-gray-50 p-2 rounded overflow-x-auto border border-gray-100">
+                            {scanResult.raw.substring(0, 150)}{scanResult.raw.length > 150 ? '...' : ''}
+                          </pre>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => { setScanStatus('idle'); setScanResult(null); isProcessingRef.current = false; }}
+                        className="mt-8 bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-6 py-3 rounded-xl font-bold transition w-full shadow-sm"
+                      >
+                        Réessayer le scan
                       </button>
                     </div>
                   ) : (

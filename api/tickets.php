@@ -182,6 +182,65 @@ switch ($action) {
         }
         break;
         
+    case 'scan':
+        $user = requireAuth($pdo);
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        $ticketId = $data['ticketId'] ?? null;
+        
+        if (!$ticketId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Veuillez scanner un billet valide.']);
+            exit();
+        }
+        
+        try {
+            $pdo->beginTransaction();
+            
+            // Allow admin or the organizer of the event
+            $stmt = $pdo->prepare("
+                SELECT tp.*, e.user_id as organizer_id, e.title as event_title
+                FROM ticket_purchases tp
+                JOIN events e ON tp.event_id = e.id
+                WHERE tp.id = ? FOR UPDATE
+            ");
+            $stmt->execute([$ticketId]);
+            $ticket = $stmt->fetch();
+            
+            if (!$ticket) {
+                $pdo->rollBack();
+                http_response_code(404);
+                echo json_encode(['error' => 'Billet introuvable dans la base de données.']);
+                exit();
+            }
+            
+            if (strtolower($user['role'] ?? '') !== 'admin' && (int)$ticket['organizer_id'] !== (int)$user['id']) {
+                $pdo->rollBack();
+                http_response_code(403);
+                echo json_encode(['error' => 'Non autorisé. Vous n\'êtes pas l\'organisateur de cet événement.']);
+                exit();
+            }
+            
+            if ($ticket['status'] === 'used') {
+                $pdo->rollBack();
+                http_response_code(400);
+                echo json_encode(['error' => 'Ce billet a DÉJÀ été scanné/utilisé.', 'ticket' => $ticket]);
+                exit();
+            }
+            
+            $stmt = $pdo->prepare("UPDATE ticket_purchases SET status = 'used' WHERE id = ?");
+            $stmt->execute([$ticketId]);
+            
+            $pdo->commit();
+            
+            echo json_encode(['success' => true, 'ticket' => $ticket]);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => 'Erreur lors de la validation du billet']);
+        }
+        break;
+
     default:
         http_response_code(404);
         echo json_encode(['error' => 'Action not found']);

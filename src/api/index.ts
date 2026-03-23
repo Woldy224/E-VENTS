@@ -122,5 +122,10 @@ export default {
     myTickets: () => apiRequest("tickets?action=my-tickets", { method: "GET" }),
     eventSales: (eventId: string) => 
       apiRequest(`tickets?action=event-sales&id=${eventId}`, { method: "GET" }),
+    scan: (ticketId: string) =>
+      apiRequest("tickets?action=scan", {
+        method: "POST",
+        body: JSON.stringify({ ticketId }),
+      }),
   },
 };
