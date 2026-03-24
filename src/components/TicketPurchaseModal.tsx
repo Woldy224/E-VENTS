@@ -6,10 +6,10 @@ import { Event } from '../types/Event';
 interface TicketPurchaseModalProps {
   event: Event;
   onClose: () => void;
-  onPurchase: (purchase: { 
-    buyerName: string; 
-    buyerEmail: string; 
-    buyerPhone?: string; 
+  onPurchase: (purchase: {
+    buyerName: string;
+    buyerEmail: string;
+    buyerPhone?: string;
     quantity: number;
     paymentMethod: string;
     paymentProof?: string;
@@ -33,11 +33,11 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
       if (paymentMethod === 'card') return;
 
       // You can replace these with your actual MonCash/NatCash merchant IDs or phone numbers
-      const moncashData = "moncash://pay?id=00000000&name=AyitiEvents"; 
+      const moncashData = "moncash://pay?id=00000000&name=AyitiEvents";
       const natcashData = "natcash://transfer?id=00000000";
-      
+
       const data = paymentMethod === 'moncash' ? moncashData : natcashData;
-      
+
       try {
         const url = await QRCode.toDataURL(data, {
           width: 400,
@@ -115,10 +115,10 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
         <form onSubmit={handleSubmit} className="p-6">
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="font-semibold text-gray-900 mb-2">{event.title}</h3>
-            <p className="text-sm text-gray-600">{new Date(`${event.date}T${event.time}`).toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
+            <p className="text-sm text-gray-600">{new Date(`${event.date}T${event.time}`).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
               day: 'numeric',
               hour: '2-digit',
               minute: '2-digit'
@@ -156,7 +156,7 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
 
           <div className="space-y-4 mb-6">
             <h4 className="font-medium text-gray-900">Information</h4>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nom Complet *
@@ -248,23 +248,23 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
                 <p className="text-sm font-medium text-gray-800 mb-4">
                   Scannez ou cliquez sur le QR Code {paymentMethod === 'moncash' ? 'MonCash' : 'NatCash'} ci-dessous
                 </p>
-                
-                <a 
+
+                <a
                   href={paymentMethod === 'moncash' ? "moncash://" : "natcash://"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block p-4 bg-white border rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {paymentMethod === 'moncash' ? (
-                    <img 
-                      src="/assets/moncash_qr.png" 
-                      alt="Payment QR" 
+                    <img
+                      src="/assets/QR2.jpeg"
+                      alt="Payment QR"
                       className="w-48 h-auto max-h-64"
                     />
                   ) : qrCodeUrl ? (
-                    <img 
-                      src={qrCodeUrl} 
-                      alt="Payment QR" 
+                    <img
+                      src={qrCodeUrl}
+                      alt="Payment QR"
                       className="w-48 h-48"
                     />
                   ) : (
@@ -273,7 +273,7 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
                     </div>
                   )}
                 </a>
-                
+
                 <p className="text-xs text-gray-500 mt-4">
                   {paymentMethod === 'moncash' ? 'Une fois le paiement effectué, veuillez soumettre une capture d\'écran.' : 'Préparez votre capture d\'écran après le transfert.'}
                 </p>
