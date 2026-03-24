@@ -1,41 +1,26 @@
 <?php
 header('Content-Type: application/json');
 
-// Get all possible environment variables
-$all_envs = [];
+$vars = [
+    'DATABASE_URL', 'PGHOST', 'PGPORT', 'PGDATABASE', 'PGUSER', 'PGPASSWORD',
+    'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS',
+    'RAILWAY_STATIC_URL', 'RAILWAY_ENVIRONMENT', 'RAILWAY_SERVICE_NAME'
+];
 
-// 1. From getenv()
-foreach (getenv() as $key => $value) {
-    if (str_contains($key, 'PASS') || str_contains($key, 'TOKEN') || str_contains($key, 'SECRET') || str_contains($key, 'URL')) {
-        $all_envs['getenv'][$key] = 'SET (hidden)';
-    } else {
-        $all_envs['getenv'][$key] = $value;
-    }
-}
+$results = [];
+foreach ($vars as $var) {
+    $val = getenv($var);
+    $results['getenv'][$var] = ($val === false) ? 'FALSE' : (($var === 'PGPASSWORD' || $var === 'DATABASE_URL' || $var === 'DB_PASS') ? 'SET (hidden)' : $val);
+    
+    $val = $_ENV[$var] ?? 'NULL';
+    $results['_ENV'][$var] = ($val === 'NULL') ? 'NULL' : (($var === 'PGPASSWORD' || $var === 'DATABASE_URL' || $var === 'DB_PASS') ? 'SET (hidden)' : $val);
 
-// 2. From $_ENV
-foreach ($_ENV as $key => $value) {
-    if (str_contains($key, 'PASS') || str_contains($key, 'TOKEN') || str_contains($key, 'SECRET') || str_contains($key, 'URL')) {
-        $all_envs['_ENV'][$key] = 'SET (hidden)';
-    } else {
-        $all_envs['_ENV'][$key] = $value;
-    }
-}
-
-// 3. From $_SERVER
-foreach ($_SERVER as $key => $value) {
-    if (str_contains($key, 'PASS') || str_contains($key, 'TOKEN') || str_contains($key, 'SECRET') || str_contains($key, 'URL')) {
-        $all_envs['_SERVER'][$key] = 'SET (hidden)';
-    } else {
-        // Skip some bulky/irrelevant server vars
-        if (!in_array($key, ['PATH', 'HTTP_COOKIE', 'LS_COLORS'])) {
-            $all_envs['_SERVER'][$key] = is_array($value) ? 'ARRAY' : $value;
-        }
-    }
+    $val = $_SERVER[$var] ?? 'NULL';
+    $results['_SERVER'][$var] = ($val === 'NULL') ? 'NULL' : (($var === 'PGPASSWORD' || $var === 'DATABASE_URL' || $var === 'DB_PASS') ? 'SET (hidden)' : $val);
 }
 
 echo json_encode([
-    'message' => 'Railway Environment Debug',
+    'message' => 'Explicit Environment Check',
     'timestamp' => date('Y-m-d H:i:s'),
-    'variables' => $all_envs
+    'results' => $results
 ], JSON_PRETTY_PRINT);
