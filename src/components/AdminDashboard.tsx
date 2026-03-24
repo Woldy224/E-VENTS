@@ -159,7 +159,9 @@ export default function AdminDashboard({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-bold rounded-full uppercase ${
-                        payment.payment_method === 'moncash' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                        payment.payment_method === 'moncash' ? 'bg-red-100 text-red-700' : 
+                        payment.payment_method === 'natcash' ? 'bg-orange-100 text-orange-700' :
+                        'bg-blue-100 text-blue-700'
                       }`}>
                         {payment.payment_method}
                       </span>

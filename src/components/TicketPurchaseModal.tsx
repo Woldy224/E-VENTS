@@ -32,7 +32,7 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (buyerInfo.name && buyerInfo.email) {
-      if ((paymentMethod === 'moncash' || paymentMethod === 'natcash') && !paymentProof) {
+      if (!paymentProof) {
         alert("Veuillez soumettre une capture d'écran du paiement pour confirmer votre achat.");
         return;
       }
@@ -199,15 +199,15 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
             </div>
           </div>
 
-          {paymentMethod === 'card' ? (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-medium text-blue-800 mb-2">Paiement Sécurisé</h4>
-              <p className="text-sm text-blue-700">
-                Paiement via carte bancaire sécurisé. Confirmation immédiate.
-              </p>
-            </div>
-          ) : (
-            <div className="mb-6 space-y-4">
+          <div className="mb-6 space-y-4">
+            {paymentMethod === 'card' ? (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">Paiement Sécurisé</h4>
+                <p className="text-sm text-blue-700">
+                  Paiement via carte bancaire sécurisé. Veuillez soumettre une capture de la confirmation de paiement.
+                </p>
+              </div>
+            ) : (
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
                 <p className="text-sm font-medium text-gray-800 mb-4">
                   Scannez ou cliquez sur le QR Code {paymentMethod === 'moncash' ? 'MonCash' : 'NatCash'} ci-dessous
@@ -230,25 +230,25 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
                   {paymentMethod === 'moncash' ? 'Une fois le paiement effectué, veuillez soumettre une capture d\'écran.' : 'Préparez votre capture d\'écran après le transfert.'}
                 </p>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Preuve de paiement (Capture d'écran) *
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-                {paymentProof && (
-                  <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" /> Image chargée avec succès
-                  </div>
-                )}
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Preuve de paiement (Capture d'écran) *
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {paymentProof && (
+                <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Image chargée avec succès
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <div className="flex justify-between items-center mb-6 p-4 bg-gray-50 rounded-lg">
             <span className="font-medium text-gray-900">Total Amount:</span>
