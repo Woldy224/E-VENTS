@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, ShoppingCart, User, Mail, Phone, CheckCircle, Minus, Plus } from 'lucide-react';
-import QRCode from 'qrcode';
 import { Event } from '../types/Event';
 
 interface TicketPurchaseModalProps {
@@ -26,35 +25,6 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'moncash' | 'natcash'>('card');
   const [paymentProof, setPaymentProof] = useState<string | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-
-  React.useEffect(() => {
-    const generatePaymentQR = async () => {
-      if (paymentMethod === 'card') return;
-
-      // You can replace these with your actual MonCash/NatCash merchant IDs or phone numbers
-      const moncashData = "moncash://pay?id=00000000&name=AyitiEvents";
-      const natcashData = "natcash://transfer?id=00000000";
-
-      const data = paymentMethod === 'moncash' ? moncashData : natcashData;
-
-      try {
-        const url = await QRCode.toDataURL(data, {
-          width: 400,
-          margin: 2,
-          color: {
-            dark: paymentMethod === 'moncash' ? '#ef4444' : '#f97316', // Red-500 for MonCash, Orange-500 for NatCash
-            light: '#ffffff'
-          }
-        });
-        setQrCodeUrl(url);
-      } catch (err) {
-        console.error('Failed to generate QR code:', err);
-      }
-    };
-
-    generatePaymentQR();
-  }, [paymentMethod]);
 
   const availableTickets = event.totalTickets - event.soldTickets;
   const totalAmount = quantity * event.price;
@@ -255,23 +225,11 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
                   rel="noopener noreferrer"
                   className="inline-block p-4 bg-white border rounded-xl hover:shadow-lg transition-shadow"
                 >
-                  {paymentMethod === 'moncash' ? (
-                    <img
-                      src="/assets/QR2.jpeg"
-                      alt="Payment QR"
-                      className="w-48 h-auto max-h-64"
-                    />
-                  ) : qrCodeUrl ? (
-                    <img
-                      src={qrCodeUrl}
-                      alt="Payment QR"
-                      className="w-48 h-48"
-                    />
-                  ) : (
-                    <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-lg">
-                      <div className="animate-pulse text-gray-400 text-xs">Génération...</div>
-                    </div>
-                  )}
+                  <img
+                    src={paymentMethod === 'moncash' ? "/assets/QR2.jpeg" : "/assets/QR3.jpeg"}
+                    alt="Payment QR"
+                    className="w-48 h-auto max-h-64"
+                  />
                 </a>
 
                 <p className="text-xs text-gray-500 mt-4">
