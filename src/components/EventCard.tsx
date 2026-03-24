@@ -52,104 +52,13 @@ export default function EventCard({ event, isAdmin, onEdit, onDelete, onReset, o
         buyerPhone: purchase.buyerPhone
       });
 
-      const ticketData = {
-        ticketId: response.purchase.id,
-        qrCode: response.purchase.qrCode,
-        eventId: event.id,
-        eventTitle: event.title,
-        eventDate: event.date,
-        eventTime: event.time,
-        eventLocation: event.location || '',
-        buyerName: purchase.buyerName,
-        buyerEmail: purchase.buyerEmail,
-        quantity: purchase.quantity,
-        totalAmount: response.purchase.totalAmount,
-        purchasedAt: response.purchase.purchasedAt
-      };
-
-      const qrString = JSON.stringify(ticketData);
-      const qrDataUrl = await QRCode.toDataURL(qrString);
-
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: [100, 160]
-      });
-
-      /* BACKGROUND */
-
-      doc.setFillColor(248, 250, 252);
-      doc.rect(0, 0, 100, 160, "F");
-
-      /* BORDER */
-
-      doc.setDrawColor(200);
-      doc.setLineWidth(0.5);
-      doc.rect(2, 2, 96, 156);
-
-      /* ===== LOGO TOP ===== */
-
-      const logoWidth = 60;
-      const logoHeight = (408 / 370) * logoWidth;
-
-      try {
-        doc.addImage("/assets/logo2.png", "PNG", 15, 10, logoWidth, logoHeight);
-      } catch { }
-
-      /* ===== WATERMARK LOGO ===== 
-      
-      try {
-        doc.setGState(new (doc as any).GState({ opacity: 0.08 }));
-        doc.addImage("/assets/logo.png", "PNG", 20, 55, 60, 25);
-        doc.setGState(new (doc as any).GState({ opacity: 10 }));
-      } catch {}
-      */
-      /* ===== QR CODE ===== */
-
-      doc.addImage(qrDataUrl, "PNG", 20, 60, 60, 60);
-
-      /* ===== ACCESS TEXT ===== */
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(28);
-      doc.setTextColor(22, 163, 74);
-
-      doc.text("ACCÈS", 50, 130, { align: "center" });
-
-      /* ===== EVENT NAME ===== */
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(60);
-
-      doc.text(event.title, 50, 145, {
-        align: "center",
-        maxWidth: 80
-      });
-
-      /* FOOTER LINE */
-
-      doc.setDrawColor(220);
-      doc.line(15, 150, 85, 150);
-
-      /* FOOTER TEXT */
-
-      doc.setFontSize(7);
-      doc.setTextColor(120);
-
-      doc.text("Présentez ce QR Code à l'entrée de l'évènement", 50, 155, {
-        align: "center"
-      });
-
-      doc.save(`ticket-${ticketData.ticketId}.pdf`);
-
       setShowPurchaseModal(false);
 
       if (onRefresh) {
         onRefresh();
       }
 
-      alert('Achat reussi! Votre billet a ete telecharge.');
+      alert('Achat enregistré ! Votre billet sera disponible au téléchargement une fois le paiement validé par l\'administrateur. Veuillez vérifier votre tableau de bord.');
     } catch (err: any) {
       console.error('Erreur achat billet:', err);
       alert(err.message || 'Une erreur est survenue lors de l\'achat.');

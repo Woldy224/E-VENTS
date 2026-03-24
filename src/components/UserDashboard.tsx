@@ -287,8 +287,15 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
                           <p className="flex items-center"><CalendarIcon className="w-4 h-4 mr-2" /> Date : {new Date(ticket.purchasedAt).toLocaleDateString()}</p>
                           <p className="flex items-center"><Users className="w-4 h-4 mr-2" /> {ticket.quantity} entrée(s)</p>
                           <p className="flex items-center"><DollarSign className="w-4 h-4 mr-2" /> {ticket.totalAmount}</p>
+                          
+                          {!ticket.isSale && (
+                            <p className={`flex items-center font-semibold ${ticket.status === 'completed' ? 'text-green-600' : 'text-amber-600'}`}>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              {ticket.status === 'completed' ? 'Validé' : 'En attente de validation'}
+                            </p>
+                          )}
                         </div>
-                        {!ticket.isSale && (
+                        {!ticket.isSale && ticket.status === 'completed' && (
                           <button
                             onClick={() => handleDownloadTicket(ticket)}
                             className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors"
@@ -296,6 +303,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
                             <Download className="w-4 h-4 mr-2" />
                             Télécharger PDF
                           </button>
+                        )}
+                        {!ticket.isSale && ticket.status !== 'completed' && (
+                          <div className="w-full text-center py-2.5 px-4 bg-gray-100 text-gray-500 rounded-xl text-sm font-medium">
+                            En attente de validation...
+                          </div>
                         )}
                       </div>
                     </div>

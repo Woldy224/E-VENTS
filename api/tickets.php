@@ -51,7 +51,8 @@ switch ($action) {
             
             $paymentMethod = $data['paymentMethod'] ?? 'card';
             $paymentProof = $data['paymentProof'] ?? null;
-            $status = ($paymentMethod === 'moncash' || $paymentMethod === 'natcash') ? 'pending_verification' : 'completed';
+            // All tickets now go through Admin Verification
+            $status = 'pending_verification';
 
             $stmt = $pdo->prepare("
                 INSERT INTO ticket_purchases (event_id, user_id, quantity, total_amount, buyer_name, buyer_email, buyer_phone, qr_code, payment_method, payment_proof, status)
