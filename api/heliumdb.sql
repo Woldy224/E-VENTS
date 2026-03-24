@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     surname VARCHAR(255) NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -32,7 +32,7 @@ CREATE TABLE events (
         CHECK (sold_tickets <= total_tickets)
 );
 
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     session_token VARCHAR(255) NOT NULL UNIQUE,
@@ -44,10 +44,10 @@ CREATE TABLE sessions (
         ON DELETE CASCADE
 );
 
-CREATE INDEX idx_sessions_expires_at
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at
 ON sessions (expires_at);
 
-CREATE TABLE event_proposals (
+CREATE TABLE IF NOT EXISTS event_proposals (
     id SERIAL PRIMARY KEY,
     event_name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -68,10 +68,10 @@ CREATE TABLE event_proposals (
         ON DELETE SET NULL
 );
 
-CREATE INDEX idx_event_proposals_status
+CREATE INDEX IF NOT EXISTS idx_event_proposals_status
 ON event_proposals (status);
 
-CREATE TABLE ticket_purchases (
+CREATE TABLE IF NOT EXISTS ticket_purchases (
     id SERIAL PRIMARY KEY,
     event_id INTEGER NOT NULL,
     user_id INTEGER,
@@ -95,5 +95,5 @@ CREATE TABLE ticket_purchases (
         ON DELETE SET NULL
 );
 
-CREATE INDEX idx_ticket_purchases_event
+CREATE INDEX IF NOT EXISTS idx_ticket_purchases_event
 ON ticket_purchases (event_id);
