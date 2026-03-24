@@ -42,14 +42,23 @@ export default function EventCard({ event, isAdmin, onEdit, onDelete, onReset, o
 
   const { date, time } = formatDate(event.date, event.time);
 
-  const handlePurchase = async (purchase: { buyerName: string; buyerEmail: string; buyerPhone?: string; quantity: number }) => {
+  const handlePurchase = async (purchase: { 
+    buyerName: string; 
+    buyerEmail: string; 
+    buyerPhone?: string; 
+    quantity: number;
+    paymentMethod: string;
+    paymentProof?: string;
+  }) => {
     try {
       const response = await api.tickets.purchase({
         eventId: event.id,
         quantity: purchase.quantity,
         buyerName: purchase.buyerName,
         buyerEmail: purchase.buyerEmail,
-        buyerPhone: purchase.buyerPhone
+        buyerPhone: purchase.buyerPhone,
+        paymentMethod: purchase.paymentMethod,
+        paymentProof: purchase.paymentProof
       });
 
       setShowPurchaseModal(false);
