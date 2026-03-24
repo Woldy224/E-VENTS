@@ -255,7 +255,13 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
                   rel="noopener noreferrer"
                   className="inline-block p-4 bg-white border rounded-xl hover:shadow-lg transition-shadow"
                 >
-                  {qrCodeUrl ? (
+                  {paymentMethod === 'moncash' ? (
+                    <img 
+                      src="/assets/moncash_qr.png" 
+                      alt="Payment QR" 
+                      className="w-48 h-auto max-h-64"
+                    />
+                  ) : qrCodeUrl ? (
                     <img 
                       src={qrCodeUrl} 
                       alt="Payment QR" 
