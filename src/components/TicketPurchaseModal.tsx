@@ -181,13 +181,7 @@ export default function TicketPurchaseModal({ event, onClose, onPurchase }: Tick
           <div className="mb-6">
             <h4 className="font-medium text-gray-900 mb-3">Méthode de Paiement</h4>
             <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('card')}
-                className={`p-3 border rounded-lg text-sm font-medium flex flex-col items-center gap-2 transition-all ${paymentMethod === 'card' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'}`}
-              >
-                💳 Card
-              </button>
+
               <button
                 type="button"
                 onClick={() => setPaymentMethod('moncash')}
