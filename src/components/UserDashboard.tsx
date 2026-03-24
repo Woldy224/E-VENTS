@@ -105,7 +105,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
           title: event.title,
           totalTickets: event.totalTickets || 0,
           soldTickets: event.soldTickets || 0,
-          revenue: 0 // Temp bypass of eventSales
+          revenue: event.revenue || 0
         }));
         setMyEvents(validEvents);
       }

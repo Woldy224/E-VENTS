@@ -235,7 +235,14 @@ switch ($action) {
         $user = requireAuth($pdo);
         
         try {
-            $stmt = $pdo->prepare("SELECT * FROM events WHERE user_id = ? ORDER BY date ASC");
+            $stmt = $pdo->prepare("
+                SELECT e.*, COALESCE(SUM(tp.total_amount), 0) as total_revenue
+                FROM events e
+                LEFT JOIN ticket_purchases tp ON e.id = tp.event_id AND tp.status IN ('completed', 'used')
+                WHERE e.user_id = ?
+                GROUP BY e.id
+                ORDER BY e.date ASC
+            ");
             $stmt->execute([$user['id']]);
             $events = $stmt->fetchAll();
             
@@ -249,6 +256,7 @@ switch ($action) {
                     'price' => (float)$event['price'],
                     'totalTickets' => (int)$event['total_tickets'],
                     'soldTickets' => (int)$event['sold_tickets'],
+                    'revenue' => (float)$event['total_revenue'],
                     'imageUrl' => $event['image_url'],
                     'location' => $event['location'],
                     'createdAt' => $event['created_at'],
