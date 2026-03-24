@@ -81,6 +81,8 @@ CREATE TABLE ticket_purchases (
     buyer_email VARCHAR(255) NOT NULL,
     buyer_phone VARCHAR(50),
     status VARCHAR(50) DEFAULT 'completed',
+    payment_method VARCHAR(50) DEFAULT 'card',
+    payment_proof TEXT,
     qr_code TEXT UNIQUE,
     purchased_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_ticket_event

@@ -14,6 +14,14 @@ try {
     // 2. Exécution de la création des tables (si elles n'existent pas)
     $pdo->exec($sql);
 
+    // 2.1 Mise à jour structurelle (Correctifs pour ticket_purchases)
+    $pdo->exec("ALTER TABLE ticket_purchases ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'card'");
+    $pdo->exec("ALTER TABLE ticket_purchases ADD COLUMN IF NOT EXISTS payment_proof TEXT");
+    $pdo->exec("ALTER TABLE ticket_purchases ADD COLUMN IF NOT EXISTS buyer_phone TEXT");
+    $pdo->exec("ALTER TABLE ticket_purchases ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed'");
+    $pdo->exec("ALTER TABLE ticket_purchases ADD COLUMN IF NOT EXISTS qr_code TEXT");
+    echo "<p style='color: green;'>✅ Structure de la table `ticket_purchases` vérifiée et mise à jour.</p>";
+
     // 3. Mise à jour ou Création de l'ADMIN avec le bon mot de passe
     $email = 'datamindscollectives.it@gmail.com';
     $password = 'DataM!nds559';
