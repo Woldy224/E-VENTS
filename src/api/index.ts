@@ -26,11 +26,9 @@ function joinUrl(base: string, endpoint: string) {
 
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const token = getAuthToken();
-  if (token) console.log("🔑 Auth Token found:", token.substring(0, 8) + "...");
   const separator = endpoint.includes("?") ? "&" : "?";
   const finalEndpoint = token ? `${endpoint}${separator}token=${token}` : endpoint;
   const url = joinUrl(API_BASE, finalEndpoint);
-  console.log("🚀 API Request to:", url);
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

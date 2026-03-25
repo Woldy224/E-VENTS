@@ -60,11 +60,9 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin, onToggleAdmin }) => 
 
     try {
       const data = await api.auth.login(loginEmail, password);
-      console.log('🔍 User login response:', JSON.stringify(data));
       const token = data?.token || data?.session_token;
       if (token) {
         setAuthToken(token);
-        console.log('✅ User token saved after login');
       }
       onUserLogin();
     } catch (err: any) {

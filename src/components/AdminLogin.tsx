@@ -21,14 +21,12 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     try {
       const data = await api.auth.adminLogin(email, password);
       // DIAGNOSTIC: log full response so we can see what field the token is in
-      console.log('🔍 Admin login response:', JSON.stringify(data));
       // Save the token so all future API requests are authenticated
       const token = data?.token || data?.session_token || data?.auth_token;
       if (token) {
         setAuthToken(token);
-        console.log('✅ Admin token saved to localStorage:', token.substring(0, 8) + '...');
       } else {
-        console.error('❌ No token found in admin login response!', data);
+        // No token found, but we don't want to log this in production
       }
       onLogin();
     } catch (err: any) {
