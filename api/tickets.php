@@ -74,10 +74,9 @@ switch ($action) {
             ]);
             $purchase = $stmt->fetch();
             
-            if ($status === 'completed') {
-                $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets + ? WHERE id = ?");
-                $stmt->execute([$data['quantity'], $data['eventId']]);
-            }
+            // Always update sold tickets on purchase to reserve them
+            $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets + ? WHERE id = ?");
+            $stmt->execute([$data['quantity'], $data['eventId']]);
             
             $pdo->commit();
             
@@ -192,13 +191,14 @@ switch ($action) {
             if ($decision === 'approve') {
                 $stmt = $pdo->prepare("UPDATE ticket_purchases SET status = 'completed' WHERE id = ?");
                 $stmt->execute([$purchaseId]);
-                
-                // Update sold tickets
-                $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets + ? WHERE id = ?");
-                $stmt->execute([$purchase['quantity'], $purchase['event_id']]);
+                // Count was already updated during purchase
             } else {
                 $stmt = $pdo->prepare("UPDATE ticket_purchases SET status = 'rejected' WHERE id = ?");
                 $stmt->execute([$purchaseId]);
+                
+                // Rollback sold tickets count if rejected
+                $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets - ? WHERE id = ?");
+                $stmt->execute([$purchase['quantity'], $purchase['event_id']]);
             }
             
             $pdo->commit();

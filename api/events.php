@@ -271,6 +271,34 @@ switch ($action) {
         }
         break;
 
+    case 'reset-tickets':
+        requireAdmin($pdo);
+        
+        try {
+            $pdo->beginTransaction();
+            
+            if ($id) {
+                // Reset specific event
+                $stmt = $pdo->prepare("UPDATE events SET sold_tickets = 0 WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                $stmt = $pdo->prepare("DELETE FROM ticket_purchases WHERE event_id = ?");
+                $stmt->execute([$id]);
+            } else {
+                // Reset all events
+                $pdo->exec("UPDATE events SET sold_tickets = 0");
+                $pdo->exec("DELETE FROM ticket_purchases");
+            }
+            
+            $pdo->commit();
+            echo json_encode(['success' => true]);
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to reset tickets: ' . $e->getMessage()]);
+        }
+        break;
+
     case 'fix-data':
         try {
             $pdo->beginTransaction();
