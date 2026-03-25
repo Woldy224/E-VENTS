@@ -210,7 +210,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin, onToggleAdmin }) => 
                   Se connecter
                 </button>
               </p>
-
+              {/* 
               <div className="mt-6 pt-6 border-t border-gray-100 text-center">
                 <button
                   onClick={onToggleAdmin}
@@ -218,7 +218,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin, onToggleAdmin }) => 
                 >
                   Accès Administration
                 </button>
-              </div>
+              </div>*/}
             </div>
           )}
 
