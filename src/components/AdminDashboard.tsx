@@ -215,17 +215,20 @@ export default function AdminDashboard({
                   <X className="h-6 w-6 text-gray-500" />
                 </button>
               </div>
-              <div className="p-6 overflow-auto bg-gray-900 flex justify-center">
+              <div className="flex-1 overflow-auto bg-gray-50 flex items-start justify-center p-2 min-h-[400px]">
                 <img 
                   src={selectedProof} 
                   alt="Proof of payment" 
-                  className="max-w-full rounded-lg shadow-inner"
+                  className="max-w-full h-auto rounded-lg shadow-lg cursor-zoom-in"
+                  onClick={() => window.open(selectedProof, '_blank')}
+                  title="Cliquez pour agrandir"
                 />
               </div>
-              <div className="p-4 bg-gray-50 flex justify-end">
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                <p className="text-xs text-gray-500 italic">Astuce : Cliquez sur l'image pour l'ouvrir dans un nouvel onglet.</p>
                 <button 
                   onClick={() => setSelectedProof(null)}
-                  className="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors"
+                  className="px-8 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-md active:scale-95"
                 >
                   Fermer
                 </button>

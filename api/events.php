@@ -8,7 +8,14 @@ $id = $_GET['id'] ?? null;
 switch ($action) {
     case 'list':
         try {
-            $stmt = $pdo->query("SELECT * FROM events WHERE status = 'active' ORDER BY date ASC");
+            $stmt = $pdo->query("
+                SELECT e.*, 
+                       (SELECT COALESCE(SUM(quantity), 0) FROM ticket_purchases WHERE event_id = e.id AND status != 'rejected') as sold_tickets,
+                       (SELECT COALESCE(SUM(total_amount), 0) FROM ticket_purchases WHERE event_id = e.id AND status IN ('completed', 'used', 'pending_verification')) as total_revenue
+                FROM events e 
+                WHERE e.status = 'active' 
+                ORDER BY e.date ASC
+            ");
             $events = $stmt->fetchAll();
             
             $formatted = array_map(function($event) {
@@ -21,6 +28,7 @@ switch ($action) {
                     'price' => (float)$event['price'],
                     'totalTickets' => (int)$event['total_tickets'],
                     'soldTickets' => (int)$event['sold_tickets'],
+                    'revenue' => (float)($event['total_revenue'] ?? 0),
                     'imageUrl' => $event['image_url'],
                     'location' => $event['location'],
                     'createdAt' => $event['created_at'],
@@ -43,7 +51,13 @@ switch ($action) {
         }
         
         try {
-            $stmt = $pdo->prepare("SELECT * FROM events WHERE id = ?");
+            $stmt = $pdo->prepare("
+                SELECT e.*, 
+                       (SELECT COALESCE(SUM(quantity), 0) FROM ticket_purchases WHERE event_id = e.id AND status != 'rejected') as sold_tickets,
+                       (SELECT COALESCE(SUM(total_amount), 0) FROM ticket_purchases WHERE event_id = e.id AND status IN ('completed', 'used', 'pending_verification')) as total_revenue
+                FROM events e 
+                WHERE e.id = ?
+            ");
             $stmt->execute([$id]);
             $event = $stmt->fetch();
             
@@ -62,6 +76,7 @@ switch ($action) {
                 'price' => (float)$event['price'],
                 'totalTickets' => (int)$event['total_tickets'],
                 'soldTickets' => (int)$event['sold_tickets'],
+                'revenue' => (float)($event['total_revenue'] ?? 0),
                 'imageUrl' => $event['image_url'],
                 'location' => $event['location'],
                 'createdAt' => $event['created_at'],
@@ -236,11 +251,11 @@ switch ($action) {
         
         try {
             $stmt = $pdo->prepare("
-                SELECT e.*, COALESCE(SUM(tp.total_amount), 0) as total_revenue
+                SELECT e.*, 
+                       (SELECT COALESCE(SUM(quantity), 0) FROM ticket_purchases WHERE event_id = e.id AND status != 'rejected') as sold_tickets,
+                       (SELECT COALESCE(SUM(total_amount), 0) FROM ticket_purchases WHERE event_id = e.id AND status IN ('completed', 'used', 'pending_verification')) as total_revenue
                 FROM events e
-                LEFT JOIN ticket_purchases tp ON e.id = tp.event_id AND tp.status IN ('completed', 'used')
                 WHERE e.user_id = ?
-                GROUP BY e.id
                 ORDER BY e.date ASC
             ");
             $stmt->execute([$user['id']]);

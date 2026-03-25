@@ -24,7 +24,12 @@ switch ($action) {
         try {
             $pdo->beginTransaction();
             
-            $stmt = $pdo->prepare("SELECT * FROM events WHERE id = ? FOR UPDATE");
+            $stmt = $pdo->prepare("
+                SELECT e.*, 
+                       (SELECT COALESCE(SUM(quantity), 0) FROM ticket_purchases WHERE event_id = e.id AND status != 'rejected') as sold_tickets
+                FROM events e 
+                WHERE e.id = ? FOR UPDATE
+            ");
             $stmt->execute([$data['eventId']]);
             $event = $stmt->fetch();
             
@@ -74,9 +79,7 @@ switch ($action) {
             ]);
             $purchase = $stmt->fetch();
             
-            // Always update sold tickets on purchase to reserve them
-            $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets + ? WHERE id = ?");
-            $stmt->execute([$data['quantity'], $data['eventId']]);
+            // No manual update needed, counts are calculated dynamically
             
             $pdo->commit();
             
@@ -191,14 +194,11 @@ switch ($action) {
             if ($decision === 'approve') {
                 $stmt = $pdo->prepare("UPDATE ticket_purchases SET status = 'completed' WHERE id = ?");
                 $stmt->execute([$purchaseId]);
-                // Count was already updated during purchase
+                // No manual update needed
             } else {
                 $stmt = $pdo->prepare("UPDATE ticket_purchases SET status = 'rejected' WHERE id = ?");
                 $stmt->execute([$purchaseId]);
-                
-                // Rollback sold tickets count if rejected
-                $stmt = $pdo->prepare("UPDATE events SET sold_tickets = sold_tickets - ? WHERE id = ?");
-                $stmt->execute([$purchase['quantity'], $purchase['event_id']]);
+                // No manual rollback needed, status 'rejected' is excluded from dynamic sum
             }
             
             $pdo->commit();
