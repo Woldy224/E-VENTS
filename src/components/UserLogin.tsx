@@ -129,7 +129,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin, onToggleAdmin }) => 
               >
                 Continuer sans se connecter
               </button>
-
+              {/* 
               <div className="pt-4 text-center">
                 <button
                   onClick={onToggleAdmin}
@@ -137,7 +137,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ onUserLogin, onToggleAdmin }) => 
                 >
                   Accès Administration
                 </button>
-              </div>
+              </div>*/}
             </div>
           )}
 
