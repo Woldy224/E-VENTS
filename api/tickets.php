@@ -302,6 +302,20 @@ switch ($action) {
                 exit();
             }
             
+            if ($ticket['status'] === 'pending_verification') {
+                $pdo->rollBack();
+                http_response_code(400);
+                echo json_encode(['error' => 'Ce billet est EN ATTENTE de validation admin. Il ne peut pas encore être utilisé.']);
+                exit();
+            }
+
+            if ($ticket['status'] === 'rejected') {
+                $pdo->rollBack();
+                http_response_code(400);
+                echo json_encode(['error' => 'Ce billet a été REJETÉ par l\'administrateur.']);
+                exit();
+            }
+
             if ($ticket['status'] === 'used') {
                 $pdo->rollBack();
                 http_response_code(400);

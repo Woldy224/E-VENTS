@@ -381,75 +381,68 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onBackToEvents }) => {
                 <div className="bg-gray-50 p-8 rounded-2xl border border-gray-200 h-full flex flex-col justify-center items-center text-center">
                   {scanStatus === 'success' && scanResult ? (
                     <div className="animate-in zoom-in duration-300 w-full max-w-sm">
-                      <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle className="w-12 h-12 text-green-600" />
+                      </div>
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">Billet Validé !</h3>
+                      <p className="text-green-600 font-medium mb-6">Accès autorisé. Bon événement !</p>
                       
-                      <div className="bg-white p-6 rounded-xl border border-gray-200 text-left mt-6 shadow-sm">
+                      <div className="bg-white p-6 rounded-2xl border-2 border-green-50 text-left shadow-sm">
                         <div className="border-b border-gray-100 pb-4 mb-4">
-                          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Participant</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Participant</p>
                           <p className="text-lg font-bold text-gray-900">{scanResult.buyerName}</p>
                           <p className="text-sm text-gray-500">{scanResult.buyerEmail}</p>
                         </div>
                         
-                        <div className="space-y-4 text-sm">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-xs text-gray-400 font-semibold uppercase">Événement</p>
-                            <p className="font-semibold text-gray-800">{scanResult.eventTitle}</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Événement</p>
+                            <p className="font-semibold text-gray-800 line-clamp-1">{scanResult.eventTitle}</p>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <div>
-                               <p className="text-xs text-gray-400 font-semibold uppercase">Quantité</p>
-                               <p className="font-semibold text-blue-600">{scanResult.quantity} entrée(s)</p>
-                            </div>
-                            <div className="text-right">
-                               <p className="text-xs text-gray-400 font-semibold uppercase">ID Billet</p>
-                               <p className="font-mono text-xs text-gray-500 mt-1">{scanResult.ticketId.substring(0, 8)}...</p>
-                            </div>
+                          <div className="text-right">
+                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Quantité</p>
+                             <p className="font-bold text-blue-600">{scanResult.quantity} places</p>
                           </div>
                         </div>
                       </div>
 
                       <button
                         onClick={() => { setScanStatus('idle'); setScanResult(null); isProcessingRef.current = false; }}
-                        className="mt-8 bg-blue-50 border border-blue-100 text-blue-700 hover:bg-blue-100 px-6 py-3 rounded-xl font-bold transition w-full shadow-sm"
+                        className="mt-8 bg-blue-600 text-white hover:bg-blue-700 px-8 py-3.5 rounded-xl font-bold transition-all w-full shadow-lg shadow-blue-200 active:scale-95"
                       >
                         Scanner le billet suivant
                       </button>
                     </div>
                   ) : scanStatus === 'invalid' ? (
                     <div className="animate-in zoom-in duration-300 w-full max-w-sm">
-                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <X className="w-8 h-8 text-red-600" />
+                      <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <X className="w-12 h-12 text-red-600" />
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Billet Invalide</h3>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 font-heading">Billet Refusé !</h3>
                       
-                      <div className="bg-red-50 p-4 rounded-xl border border-red-100 mb-6 text-left">
-                        <p className="text-red-700 font-medium text-sm text-center">
-                          {scanResult?.error || "Une erreur inconnue s'est produite lors de la vérification."}
+                      <div className="bg-red-50 p-6 rounded-2xl border-2 border-red-100 mb-6 text-left">
+                        <p className="text-red-700 font-bold text-center leading-relaxed">
+                          {scanResult?.error || "Ce QR Code n'est pas reconnu par le système ou a déjà été rejeté."}
                         </p>
                       </div>
                       
-                      {scanResult?.raw && (
-                        <div className="bg-white p-4 rounded-xl border border-gray-200 text-left w-full shadow-sm">
-                          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Données brutes lues :</p>
-                          <pre className="font-mono text-[10px] text-gray-600 bg-gray-50 p-2 rounded overflow-x-auto border border-gray-100">
-                            {scanResult.raw.substring(0, 150)}{scanResult.raw.length > 150 ? '...' : ''}
-                          </pre>
-                        </div>
-                      )}
-
                       <button
                         onClick={() => { setScanStatus('idle'); setScanResult(null); isProcessingRef.current = false; }}
-                        className="mt-8 bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-6 py-3 rounded-xl font-bold transition w-full shadow-sm"
+                        className="mt-8 bg-gray-900 text-white hover:bg-black px-8 py-3.5 rounded-xl font-bold transition-all w-full shadow-lg active:scale-95"
                       >
                         Réessayer le scan
                       </button>
                     </div>
                   ) : (
-                    <div>
-                      <QrCode className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-xl font-medium text-gray-700">En attente de scan...</h3>
-                      <p className="text-gray-500 mt-2 max-w-xs mx-auto">Le résultat apparaîtra ici dès qu'un billet sera détecté par la caméra.</p>
+                    <div className="py-10">
+                      <div className="relative mx-auto w-24 h-24 mb-6">
+                        <QrCode className="w-24 h-24 text-gray-200" />
+                        <div className="absolute inset-0 border-2 border-blue-400/30 rounded-xl animate-pulse"></div>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-800 font-heading">Scanner un Billet</h3>
+                      <p className="text-gray-500 mt-2 max-w-[240px] mx-auto text-sm leading-relaxed">
+                        Le résultat de la validation s'affichera ici instantanément.
+                      </p>
                     </div>
                   )}
                 </div>
